@@ -1,5 +1,7 @@
 package com.smartcampus.backend.resource.model;
 
+import com.smartcampus.backend.resource.enums.ResourceStatus;
+import com.smartcampus.backend.resource.enums.ResourceType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -16,8 +18,7 @@ public class Resource {
     @NotBlank(message = "Name is required")
     private String name;
 
-    @NotBlank(message = "Type is required")
-    private String type;
+    private ResourceType type;
 
     @Min(value = 1, message = "Capacity must be at least 1")
     private int capacity;
@@ -25,6 +26,5 @@ public class Resource {
     @NotBlank(message = "Location is required")
     private String location;
 
-    @NotBlank(message = "Status is required")
-    private String status;
+    private ResourceStatus status;
 }
