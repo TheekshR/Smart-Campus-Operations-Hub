@@ -27,4 +27,7 @@ public class Resource {
     private String location;
 
     private ResourceStatus status;
+
+    private String availabilityStart;
+    private String availabilityEnd;
 }
