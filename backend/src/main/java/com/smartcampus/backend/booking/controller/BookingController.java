@@ -2,6 +2,7 @@ package com.smartcampus.backend.booking.controller;
 
 import com.smartcampus.backend.booking.model.Booking;
 import com.smartcampus.backend.booking.service.BookingService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,7 +18,7 @@ public class BookingController {
     }
 
     @PostMapping
-    public Booking create(@RequestBody Booking booking) {
+    public Booking create(@Valid @RequestBody Booking booking) {
         return service.createBooking(booking);
     }
 
@@ -34,6 +35,21 @@ public class BookingController {
     @GetMapping("/user/{userId}")
     public List<Booking> getByUserId(@PathVariable String userId) {
         return service.getBookingsByUserId(userId);
+    }
+
+    @GetMapping("/status/{status}")
+    public List<Booking> getByStatus(@PathVariable String status) {
+        return service.getBookingsByStatus(status);
+    }
+
+    @GetMapping("/resource/{resourceId}")
+    public List<Booking> getByResourceId(@PathVariable String resourceId) {
+        return service.getBookingsByResourceId(resourceId);
+    }
+
+    @GetMapping("/date/{date}")
+    public List<Booking> getByDate(@PathVariable String date) {
+        return service.getBookingsByDate(date);
     }
 
     @PutMapping("/{id}/approve")
