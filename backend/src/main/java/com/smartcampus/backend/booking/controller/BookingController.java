@@ -37,18 +37,22 @@ public class BookingController {
     }
 
     @PutMapping("/{id}/approve")
-    public Booking approve(@PathVariable String id) {
-        return service.updateBookingStatus(id, "APPROVED");
+    public Booking approve(@PathVariable String id, @RequestParam String admin) {
+        return service.updateBookingStatus(id, "APPROVED", "Approved successfully", admin);
     }
 
     @PutMapping("/{id}/reject")
-    public Booking reject(@PathVariable String id) {
-        return service.updateBookingStatus(id, "REJECTED");
+    public Booking reject(@PathVariable String id,
+                          @RequestParam String reason,
+                          @RequestParam String admin) {
+        return service.updateBookingStatus(id, "REJECTED", reason, admin);
     }
 
     @PutMapping("/{id}/cancel")
-    public Booking cancel(@PathVariable String id) {
-        return service.updateBookingStatus(id, "CANCELLED");
+    public Booking cancel(@PathVariable String id,
+                          @RequestParam(required = false, defaultValue = "Cancelled by user") String reason,
+                          @RequestParam(required = false, defaultValue = "USER") String admin) {
+        return service.updateBookingStatus(id, "CANCELLED", reason, admin);
     }
 
     @DeleteMapping("/{id}")

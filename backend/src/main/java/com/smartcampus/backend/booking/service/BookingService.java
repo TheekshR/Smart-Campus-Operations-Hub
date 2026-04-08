@@ -104,14 +104,17 @@ public class BookingService {
         return repository.findByUserId(userId);
     }
 
-    public Booking updateBookingStatus(String id, String status) {
+    public Booking updateBookingStatus(String id, String status, String reason, String admin) {
         Booking existingBooking = repository.findById(id).orElse(null);
-
+    
         if (existingBooking == null) {
-            return null;
+            throw new RuntimeException("Booking not found");
         }
-
+    
         existingBooking.setStatus(status);
+        existingBooking.setReviewReason(reason);
+        existingBooking.setApprovedBy(admin);
+    
         return repository.save(existingBooking);
     }
 

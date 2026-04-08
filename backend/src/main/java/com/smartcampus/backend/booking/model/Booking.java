@@ -19,4 +19,6 @@ public class Booking {
     private String purpose;
     private int attendees;
     private String status;
+    private String reviewReason;
+    private String approvedBy;
 }
