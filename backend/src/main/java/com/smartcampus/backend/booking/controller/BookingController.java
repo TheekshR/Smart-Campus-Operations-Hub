@@ -4,6 +4,7 @@ import com.smartcampus.backend.booking.model.Booking;
 import com.smartcampus.backend.booking.service.BookingService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import com.smartcampus.backend.booking.model.BookingSuggestion;
 
 import java.util.List;
 
@@ -31,6 +32,14 @@ public class BookingController {
     public Booking getById(@PathVariable String id) {
         return service.getBookingById(id);
     }
+
+    @GetMapping("/suggestions")
+    public BookingSuggestion getSuggestion(@RequestParam String resourceId,
+                                       @RequestParam String date,
+                                       @RequestParam String startTime,
+                                       @RequestParam String endTime) {
+    return service.getSuggestedSlot(resourceId, date, startTime, endTime);
+}
 
     @GetMapping("/user/{userId}")
     public List<Booking> getByUserId(@PathVariable String userId) {
@@ -75,4 +84,6 @@ public class BookingController {
     public void delete(@PathVariable String id) {
         service.deleteBooking(id);
     }
+
+    
 }

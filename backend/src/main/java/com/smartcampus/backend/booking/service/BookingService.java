@@ -4,6 +4,7 @@ import com.smartcampus.backend.booking.model.Booking;
 import com.smartcampus.backend.booking.repository.BookingRepository;
 import com.smartcampus.backend.resource.model.Resource;
 import com.smartcampus.backend.resource.repository.ResourceRepository;
+import com.smartcampus.backend.booking.model.BookingSuggestion;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
@@ -105,5 +106,47 @@ public class BookingService {
 
     public void deleteBooking(String id) {
         repository.deleteById(id);
+    }
+
+    public BookingSuggestion getSuggestedSlot(String resourceId, String date, String startTime, String endTime) {
+
+        LocalTime requestedStart = LocalTime.parse(startTime);
+        LocalTime requestedEnd = LocalTime.parse(endTime);
+    
+        if (!requestedEnd.isAfter(requestedStart)) {
+            throw new RuntimeException("End time must be after start time");
+        }
+    
+        long durationMinutes = java.time.Duration.between(requestedStart, requestedEnd).toMinutes();
+    
+        List<Booking> bookings = repository.findByResourceIdAndDateOrderByStartTimeAsc(resourceId, date);
+    
+        // remove cancelled and rejected bookings
+        bookings = bookings.stream()
+                .filter(b -> !"REJECTED".equals(b.getStatus()) && !"CANCELLED".equals(b.getStatus()))
+                .toList();
+    
+        LocalTime candidateStart = requestedStart;
+    
+        for (Booking booking : bookings) {
+            LocalTime existingStart = LocalTime.parse(booking.getStartTime());
+            LocalTime existingEnd = LocalTime.parse(booking.getEndTime());
+    
+            LocalTime candidateEnd = candidateStart.plusMinutes(durationMinutes);
+    
+            boolean overlaps = candidateStart.isBefore(existingEnd) && candidateEnd.isAfter(existingStart);
+    
+            if (overlaps) {
+                candidateStart = existingEnd;
+            }
+        }
+    
+        LocalTime suggestedEnd = candidateStart.plusMinutes(durationMinutes);
+    
+        return new BookingSuggestion(
+                candidateStart.toString(),
+                suggestedEnd.toString(),
+                "Suggested next available slot"
+        );
     }
 }
