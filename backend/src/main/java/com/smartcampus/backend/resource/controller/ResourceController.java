@@ -17,7 +17,7 @@ public class ResourceController {
     }
 
     @PostMapping
-    public Resource create(@RequestBody Resource resource) {
+    public Resource create(@jakarta.validation.Valid @RequestBody Resource resource) {
         return service.createResource(resource);
     }
 
@@ -32,7 +32,7 @@ public class ResourceController {
     }
 
     @PutMapping("/{id}")
-    public Resource update(@PathVariable String id, @RequestBody Resource resource) {
+    public Resource update(@PathVariable String id, @jakarta.validation.Valid @RequestBody Resource resource) {
         return service.updateResource(id, resource);
     }
 
