@@ -1,5 +1,6 @@
 package com.smartcampus.backend.resource.service;
 
+import com.smartcampus.backend.resource.enums.ResourceType;
 import com.smartcampus.backend.resource.model.Resource;
 import com.smartcampus.backend.resource.repository.ResourceRepository;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,25 @@ public class ResourceService {
         return repository.save(resource);
     }
 
-    public List<Resource> getAllResources() {
+    public List<Resource> getFilteredResources(String type, String location) {
+
+        if (type != null && location != null) {
+            return repository.findByTypeAndLocationIgnoreCase(
+                    ResourceType.valueOf(type.toUpperCase()),
+                    location
+            );
+        }
+
+        if (type != null) {
+            return repository.findByType(
+                    ResourceType.valueOf(type.toUpperCase())
+            );
+        }
+
+        if (location != null) {
+            return repository.findByLocationIgnoreCase(location);
+        }
+
         return repository.findAll();
     }
 
