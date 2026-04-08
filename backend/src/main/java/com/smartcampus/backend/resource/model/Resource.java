@@ -1,14 +1,14 @@
 package com.smartcampus.backend.resource.model;
 
+import com.smartcampus.backend.resource.enums.ResourceStatus;
+import com.smartcampus.backend.resource.enums.ResourceType;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import com.smartcampus.backend.resource.enums.ResourceStatus;
-import com.smartcampus.backend.resource.enums.ResourceType;
-
-import com.smartcampus.backend.resource.enums.ResourceType;
-import com.smartcampus.backend.resource.enums.ResourceStatus;
 
 @Data
 @Document(collection = "resources")
@@ -24,8 +24,9 @@ public class Resource {
 
     @Min(value = 1, message = "Capacity must be at least 1")
     private int capacity;
+
+    @NotBlank(message = "Location is required")
     private String location;
 
-    @NotBlank(message = "Status is required")
-    private String status;
+    private ResourceStatus status;
 }
