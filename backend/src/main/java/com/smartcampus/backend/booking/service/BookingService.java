@@ -6,6 +6,7 @@ import com.smartcampus.backend.resource.model.Resource;
 import com.smartcampus.backend.resource.repository.ResourceRepository;
 import com.smartcampus.backend.booking.model.BookingSuggestion;
 import org.springframework.stereotype.Service;
+import com.smartcampus.backend.resource.enums.ResourceStatus;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -27,8 +28,8 @@ public class BookingService {
         if (resource == null) {
             throw new RuntimeException("Resource not found");
         }
-    
-        if (!"ACTIVE".equals(resource.getStatus())) {
+
+        if (resource.getStatus() != ResourceStatus.ACTIVE) {
             throw new RuntimeException("Resource is not available for booking");
         }
     
