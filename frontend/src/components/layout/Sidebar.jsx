@@ -92,7 +92,7 @@ export default function Sidebar({ role = "user" }) {
 
         {/* Title */}
         <Typography
-          variant="h6"
+          variant="h5"
           fontWeight="800"
           letterSpacing="0.6px"
           sx={{
