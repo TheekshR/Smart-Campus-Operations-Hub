@@ -10,6 +10,7 @@ import {
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
+import IssueCommentsSection from "../../components/issues/IssueCommentsSection";
 
 export default function ResolvedTicketsPage() {
   const { currentUser, loading, error } = useCurrentUser();
@@ -89,6 +90,7 @@ export default function ResolvedTicketsPage() {
                   <Typography>
                     Resolution Note: {issue.resolutionNote || "-"}
                   </Typography>
+                  <IssueCommentsSection issueId={issue.id} />
                 </CardContent>
               </Card>
             </Grid>

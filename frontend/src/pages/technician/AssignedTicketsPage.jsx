@@ -11,6 +11,7 @@ import {
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
+import IssueCommentsSection from "../../components/issues/IssueCommentsSection";
 
 export default function AssignedTicketsPage() {
   const { currentUser, loading, error } = useCurrentUser();
@@ -118,6 +119,7 @@ export default function AssignedTicketsPage() {
                   >
                     Start Progress
                   </Button>
+                  <IssueCommentsSection issueId={issue.id} />
                 </CardContent>
               </Card>
             </Grid>
