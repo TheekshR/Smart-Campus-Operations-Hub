@@ -1,11 +1,12 @@
 package com.smartcampus.backend.user.controller;
 
+import com.smartcampus.backend.user.model.UpdateProfileRequest;
 import com.smartcampus.backend.user.model.User;
 import com.smartcampus.backend.user.model.UserRole;
 import com.smartcampus.backend.user.service.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,9 +22,17 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public User getCurrentUser(@AuthenticationPrincipal OAuth2User oAuth2User) {
-        String email = (String) oAuth2User.getAttributes().get("email");
+    public User getCurrentUser(@AuthenticationPrincipal OidcUser oidcUser) {
+        String email = oidcUser.getEmail();
         return service.getCurrentUserByEmail(email);
+    }
+
+    @PreAuthorize("hasAnyRole('USER','ADMIN','TECHNICIAN')")
+    @PutMapping("/me")
+    public User updateMyProfile(@AuthenticationPrincipal OidcUser oidcUser,
+                                @RequestBody UpdateProfileRequest request) {
+        String email = oidcUser.getEmail();
+        return service.updateMyProfile(email, request);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

@@ -30,8 +30,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/resources/**").authenticated()
                         .requestMatchers("/api/bookings/**").authenticated()
                         .requestMatchers("/api/issues/**").authenticated()
-                        .requestMatchers("/api/debug/auth").authenticated()
                         .requestMatchers("/api/notifications/**").authenticated()
+                        .requestMatchers("/api/debug/auth").authenticated()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth

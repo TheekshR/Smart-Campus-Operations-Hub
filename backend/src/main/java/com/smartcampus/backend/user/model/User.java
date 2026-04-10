@@ -18,6 +18,10 @@ public class User {
 
     private UserRole role;
 
+    private String phone;
+    private String department;
+    private String bio;
+
     private String createdAt;
     private String lastLoginAt;
 }

@@ -1,8 +1,8 @@
 package com.smartcampus.backend.config;
 
 import com.smartcampus.backend.user.model.User;
-import com.smartcampus.backend.user.model.UserRole;
 import com.smartcampus.backend.user.repository.UserRepository;
+import com.smartcampus.backend.user.service.UserService;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
@@ -12,15 +12,16 @@ import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.List;
 
 @Service
 public class CustomOidcUserService extends OidcUserService {
 
+    private final UserService userService;
     private final UserRepository userRepository;
 
-    public CustomOidcUserService(UserRepository userRepository) {
+    public CustomOidcUserService(UserService userService, UserRepository userRepository) {
+        this.userService = userService;
         this.userRepository = userRepository;
     }
 
@@ -33,29 +34,10 @@ public class CustomOidcUserService extends OidcUserService {
         String name = oidcUser.getFullName();
         String picture = oidcUser.getPicture();
 
-        if (email == null || email.isBlank()) {
-            throw new OAuth2AuthenticationException("Email not found from Google account");
-        }
+        userService.saveOrUpdateGoogleUser(email, googleId, name, picture);
 
-        User appUser = userRepository.findByEmail(email).orElse(null);
-
-        if (appUser == null) {
-            appUser = new User();
-            appUser.setEmail(email);
-            appUser.setGoogleId(googleId);
-            appUser.setName(name);
-            appUser.setPicture(picture);
-            appUser.setRole(UserRole.USER);
-            appUser.setCreatedAt(Instant.now().toString());
-            appUser.setLastLoginAt(Instant.now().toString());
-            appUser = userRepository.save(appUser);
-        } else {
-            appUser.setGoogleId(googleId);
-            appUser.setName(name);
-            appUser.setPicture(picture);
-            appUser.setLastLoginAt(Instant.now().toString());
-            appUser = userRepository.save(appUser);
-        }
+        User appUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new OAuth2AuthenticationException("User not found in database"));
 
         List<GrantedAuthority> authorities = List.of(
                 new SimpleGrantedAuthority("ROLE_" + appUser.getRole().name())

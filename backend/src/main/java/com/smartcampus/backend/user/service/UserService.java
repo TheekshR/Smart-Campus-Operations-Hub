@@ -1,14 +1,13 @@
 package com.smartcampus.backend.user.service;
 
+import com.smartcampus.backend.user.model.UpdateProfileRequest;
 import com.smartcampus.backend.user.model.User;
 import com.smartcampus.backend.user.model.UserRole;
 import com.smartcampus.backend.user.repository.UserRepository;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class UserService {
@@ -19,23 +18,23 @@ public class UserService {
         this.repository = repository;
     }
 
-    public User saveOrUpdateGoogleUser(OAuth2User oAuth2User) {
-        Map<String, Object> attributes = oAuth2User.getAttributes();
-
-        String googleId = (String) attributes.get("sub");
-        String email = (String) attributes.get("email");
-        String name = (String) attributes.get("name");
-        String picture = (String) attributes.get("picture");
+    public User saveOrUpdateGoogleUser(String email, String googleId, String name, String picture) {
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("Email not found from Google account");
+        }
 
         User user = repository.findByEmail(email).orElse(null);
 
         if (user == null) {
             user = new User();
-            user.setGoogleId(googleId);
             user.setEmail(email);
+            user.setGoogleId(googleId);
             user.setName(name);
             user.setPicture(picture);
             user.setRole(UserRole.USER);
+            user.setPhone(null);
+            user.setDepartment(null);
+            user.setBio(null);
             user.setCreatedAt(Instant.now().toString());
             user.setLastLoginAt(Instant.now().toString());
             return repository.save(user);
@@ -52,6 +51,17 @@ public class UserService {
     public User getCurrentUserByEmail(String email) {
         return repository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    public User updateMyProfile(String email, UpdateProfileRequest request) {
+        User user = repository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setPhone(request.getPhone());
+        user.setDepartment(request.getDepartment());
+        user.setBio(request.getBio());
+
+        return repository.save(user);
     }
 
     public List<User> getAllUsers() {
