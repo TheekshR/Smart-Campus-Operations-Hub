@@ -8,6 +8,7 @@ import {
   TextField,
   Button,
   Alert,
+  MenuItem,
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
@@ -17,17 +18,20 @@ export default function AssignTechnicianPage() {
   const { currentUser, loading, error } = useCurrentUser();
   const [issues, setIssues] = useState([]);
   const [resourceMap, setResourceMap] = useState({});
+  const [technicians, setTechnicians] = useState([]);
   const [technicianInputs, setTechnicianInputs] = useState({});
   const [message, setMessage] = useState("");
 
   const fetchReportedIssues = async () => {
     try {
-      const [issuesRes, resourcesRes] = await Promise.all([
+      const [issuesRes, resourcesRes, techniciansRes] = await Promise.all([
         api.get("/api/issues/status/REPORTED"),
         api.get("/api/resources"),
+        api.get("/api/users/role/TECHNICIAN"),
       ]);
 
       setIssues(issuesRes.data || []);
+      setTechnicians(techniciansRes.data || []);
 
       const map = {};
       (resourcesRes.data || []).forEach((resource) => {
@@ -36,6 +40,11 @@ export default function AssignTechnicianPage() {
       setResourceMap(map);
     } catch (error) {
       console.error("Failed to fetch reported issues:", error);
+      setMessage(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Failed to load issues or technicians."
+      );
     }
   };
 
@@ -56,7 +65,7 @@ export default function AssignTechnicianPage() {
     const technicianId = technicianInputs[issueId];
 
     if (!technicianId || !technicianId.trim()) {
-      setMessage("Please enter a technician ID before assigning.");
+      setMessage("Please select a technician before assigning.");
       return;
     }
 
@@ -128,14 +137,21 @@ export default function AssignTechnicianPage() {
                   <Typography>Status: {issue.status}</Typography>
 
                   <TextField
+                    select
                     fullWidth
-                    label="Technician ID"
+                    label="Select Technician"
                     value={technicianInputs[issue.id] || ""}
                     onChange={(e) =>
                       handleTechnicianChange(issue.id, e.target.value)
                     }
                     sx={{ mt: 2 }}
-                  />
+                  >
+                    {technicians.map((technician) => (
+                      <MenuItem key={technician.id} value={technician.id}>
+                        {technician.name} {technician.email ? `(${technician.email})` : ""}
+                      </MenuItem>
+                    ))}
+                  </TextField>
 
                   <Button
                     variant="contained"
