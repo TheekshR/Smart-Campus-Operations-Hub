@@ -3,7 +3,6 @@ import {
   Box,
   Card,
   CardContent,
-  Typography,
   TextField,
   Button,
   MenuItem,
@@ -11,14 +10,13 @@ import {
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
-
-const CURRENT_USER_ID = "USER001";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 export default function ReportIncidentPage() {
+  const { currentUser, loading, error } = useCurrentUser();
   const [resources, setResources] = useState([]);
   const [formData, setFormData] = useState({
     resourceId: "",
-    userId: CURRENT_USER_ID,
     description: "",
     priority: "",
   });
@@ -27,12 +25,10 @@ export default function ReportIncidentPage() {
   useEffect(() => {
     const fetchResources = async () => {
       try {
-        const response = await api.get("/api/resources", {
-          params: { status: "ACTIVE" },
-        });
-        setResources(response.data);
-      } catch (error) {
-        console.error("Failed to fetch resources:", error);
+        const response = await api.get("/api/resources");
+        setResources(response.data.filter((resource) => resource.status === "ACTIVE"));
+      } catch (err) {
+        console.error("Failed to fetch resources:", err);
       }
     };
 
@@ -54,24 +50,32 @@ export default function ReportIncidentPage() {
     try {
       await api.post("/api/issues", {
         ...formData,
+        userId: currentUser.id,
       });
 
       setMessage("Issue reported successfully.");
       setFormData({
         resourceId: "",
-        userId: CURRENT_USER_ID,
         description: "",
         priority: "",
       });
-    } catch (error) {
-      console.error("Issue creation failed:", error);
+    } catch (err) {
+      console.error("Issue creation failed:", err);
       const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
+        err.response?.data?.message ||
+        err.response?.data?.error ||
         "Failed to report issue. Please check your inputs.";
       setMessage(errorMessage);
     }
   };
+
+  if (loading) {
+    return <Box sx={{ p: 3 }}>Loading...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ p: 3 }}>{error}</Box>;
+  }
 
   return (
     <Box>

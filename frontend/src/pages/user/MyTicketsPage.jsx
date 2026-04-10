@@ -9,18 +9,20 @@ import {
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
-
-const CURRENT_USER_ID = "USER001";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 export default function MyTicketsPage() {
+  const { currentUser, loading, error } = useCurrentUser();
   const [issues, setIssues] = useState([]);
   const [resourceMap, setResourceMap] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!currentUser?.id) return;
+
       try {
         const [issuesRes, resourcesRes] = await Promise.all([
-          api.get(`/api/issues/user/${CURRENT_USER_ID}`),
+          api.get(`/api/issues/user/${currentUser.id}`),
           api.get("/api/resources"),
         ]);
 
@@ -31,13 +33,13 @@ export default function MyTicketsPage() {
           map[resource.id] = resource;
         });
         setResourceMap(map);
-      } catch (error) {
-        console.error("Failed to fetch user issues:", error);
+      } catch (err) {
+        console.error("Failed to fetch user issues:", err);
       }
     };
 
     fetchData();
-  }, []);
+  }, [currentUser]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -53,6 +55,14 @@ export default function MyTicketsPage() {
         return "default";
     }
   };
+
+  if (loading) {
+    return <Box sx={{ p: 3 }}>Loading...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ p: 3 }}>{error}</Box>;
+  }
 
   return (
     <Box>

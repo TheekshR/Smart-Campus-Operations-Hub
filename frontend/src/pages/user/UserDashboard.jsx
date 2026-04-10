@@ -3,31 +3,51 @@ import { Box, Grid, Card, CardContent, Typography } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import StatCard from "../../components/common/StatCard";
 import api from "../../api/axios";
-
-const CURRENT_USER_ID = "USER001";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 export default function UserDashboard() {
+  const { currentUser, loading, error } = useCurrentUser();
   const [bookings, setBookings] = useState([]);
+  const [issues, setIssues] = useState([]);
+  const [unreadNotifications, setUnreadNotifications] = useState([]);
 
   useEffect(() => {
-    const fetchBookings = async () => {
+    const fetchDashboardData = async () => {
+      if (!currentUser?.id) return;
+
       try {
-        const response = await api.get(`/api/bookings/user/${CURRENT_USER_ID}`);
-        setBookings(response.data);
-      } catch (error) {
-        console.error("Failed to fetch user bookings:", error);
+        const [bookingsRes, issuesRes, notificationsRes] = await Promise.all([
+          api.get(`/api/bookings/user/${currentUser.id}`),
+          api.get(`/api/issues/user/${currentUser.id}`),
+          api.get("/api/notifications/me/unread"),
+        ]);
+
+        setBookings(bookingsRes.data);
+        setIssues(issuesRes.data);
+        setUnreadNotifications(notificationsRes.data);
+      } catch (err) {
+        console.error("Failed to fetch dashboard data:", err);
       }
     };
 
-    fetchBookings();
-  }, []);
+    fetchDashboardData();
+  }, [currentUser]);
+
+  if (loading) {
+    return <Box sx={{ p: 3 }}>Loading...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ p: 3 }}>{error}</Box>;
+  }
 
   const activeBookings = bookings.filter(
     (booking) => booking.status === "APPROVED" || booking.status === "PENDING"
   ).length;
 
-  const openTickets = 0;
-  const unreadNotifications = 0;
+  const openTickets = issues.filter(
+    (issue) => issue.status !== "FIXED"
+  ).length;
 
   return (
     <Box>
@@ -44,18 +64,18 @@ export default function UserDashboard() {
           <StatCard title="My Open Tickets" value={openTickets} />
         </Grid>
         <Grid item xs={12} md={4}>
-          <StatCard title="Unread Notifications" value={unreadNotifications} />
+          <StatCard title="Unread Notifications" value={unreadNotifications.length} />
         </Grid>
       </Grid>
 
       <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
         <CardContent>
           <Typography variant="h6" fontWeight="bold" gutterBottom>
-            Welcome
+            Welcome, {currentUser?.name}
           </Typography>
           <Typography color="text.secondary">
             Use the left menu to browse resources, submit booking requests,
-            track your bookings, and manage future tickets and notifications.
+            track your bookings, manage tickets, and view notifications.
           </Typography>
         </CardContent>
       </Card>

@@ -10,41 +10,51 @@ import {
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
-
-const CURRENT_USER_ID = "USER001";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 export default function MyBookingsPage() {
+  const { currentUser, loading, error } = useCurrentUser();
   const [bookings, setBookings] = useState([]);
   const [message, setMessage] = useState("");
 
-  const fetchBookings = async () => {
+  const fetchBookings = async (userId) => {
     try {
-      const response = await api.get(`/api/bookings/user/${CURRENT_USER_ID}`);
+      const response = await api.get(`/api/bookings/user/${userId}`);
       setBookings(response.data);
-    } catch (error) {
-      console.error("Failed to fetch bookings:", error);
+    } catch (err) {
+      console.error("Failed to fetch bookings:", err);
     }
   };
 
   useEffect(() => {
-    fetchBookings();
-  }, []);
+    if (currentUser?.id) {
+      fetchBookings(currentUser.id);
+    }
+  }, [currentUser]);
 
   const handleCancel = async (bookingId) => {
     try {
       await api.put(`/api/bookings/${bookingId}/cancel`, null, {
         params: {
           reason: "Cancelled by user",
-          admin: "USER",
+          admin: currentUser?.name || "USER",
         },
       });
       setMessage("Booking cancelled successfully.");
-      fetchBookings();
-    } catch (error) {
-      console.error("Failed to cancel booking:", error);
+      fetchBookings(currentUser.id);
+    } catch (err) {
+      console.error("Failed to cancel booking:", err);
       setMessage("Failed to cancel booking.");
     }
   };
+
+  if (loading) {
+    return <Box sx={{ p: 3 }}>Loading...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ p: 3 }}>{error}</Box>;
+  }
 
   return (
     <Box>

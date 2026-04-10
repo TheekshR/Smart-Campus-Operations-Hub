@@ -3,7 +3,6 @@ import {
   Box,
   Card,
   CardContent,
-  Typography,
   TextField,
   Button,
   MenuItem,
@@ -11,14 +10,13 @@ import {
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
-
-const CURRENT_USER_ID = "USER001";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 export default function BookResourcePage() {
+  const { currentUser, loading, error } = useCurrentUser();
   const [resources, setResources] = useState([]);
   const [formData, setFormData] = useState({
     resourceId: "",
-    userId: CURRENT_USER_ID,
     date: "",
     startTime: "",
     endTime: "",
@@ -31,12 +29,10 @@ export default function BookResourcePage() {
   useEffect(() => {
     const fetchResources = async () => {
       try {
-        const response = await api.get("/api/resources", {
-          params: { status: "ACTIVE" },
-        });
-        setResources(response.data);
-      } catch (error) {
-        console.error("Failed to fetch resources:", error);
+        const response = await api.get("/api/resources");
+        setResources(response.data.filter((resource) => resource.status === "ACTIVE"));
+      } catch (err) {
+        console.error("Failed to fetch resources:", err);
       }
     };
 
@@ -64,7 +60,8 @@ export default function BookResourcePage() {
           },
         });
         setSuggestion(response.data);
-      } catch (error) {
+      } catch (err) {
+        console.error("Failed to fetch suggestion:", err);
         setSuggestion(null);
       }
     }
@@ -77,13 +74,13 @@ export default function BookResourcePage() {
     try {
       await api.post("/api/bookings", {
         ...formData,
+        userId: currentUser.id,
         attendees: Number(formData.attendees),
       });
 
       setMessage("Booking request submitted successfully.");
       setFormData({
         resourceId: "",
-        userId: CURRENT_USER_ID,
         date: "",
         startTime: "",
         endTime: "",
@@ -91,11 +88,23 @@ export default function BookResourcePage() {
         attendees: "",
       });
       setSuggestion(null);
-    } catch (error) {
-      console.error("Booking creation failed:", error);
-      setMessage("Failed to create booking. Please check your inputs.");
+    } catch (err) {
+      console.error("Booking creation failed:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Failed to create booking. Please check your inputs.";
+      setMessage(errorMessage);
     }
   };
+
+  if (loading) {
+    return <Box sx={{ p: 3 }}>Loading...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ p: 3 }}>{error}</Box>;
+  }
 
   return (
     <Box>
