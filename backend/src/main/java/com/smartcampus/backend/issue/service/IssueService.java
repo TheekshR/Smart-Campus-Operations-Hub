@@ -6,6 +6,8 @@ import com.smartcampus.backend.resource.model.Resource;
 import com.smartcampus.backend.resource.repository.ResourceRepository;
 import org.springframework.stereotype.Service;
 import com.smartcampus.backend.resource.enums.ResourceStatus;
+import com.smartcampus.backend.notification.model.NotificationType;
+import com.smartcampus.backend.notification.service.NotificationService;
 
 import java.util.List;
 
@@ -14,11 +16,15 @@ public class IssueService {
 
     private final IssueRepository repository;
     private final ResourceRepository resourceRepository;
+    private final NotificationService notificationService;
 
-    public IssueService(IssueRepository repository, ResourceRepository resourceRepository) {
+    public IssueService(IssueRepository repository,
+        ResourceRepository resourceRepository,
+        NotificationService notificationService) {
         this.repository = repository;
         this.resourceRepository = resourceRepository;
-    }
+        this.notificationService = notificationService;
+        }
 
     public Issue createIssue(Issue issue) {
         Resource resource = resourceRepository.findById(issue.getResourceId()).orElse(null);
@@ -68,58 +74,87 @@ public class IssueService {
 
     public Issue assignTechnician(String id, String technicianId, String admin) {
         Issue issue = repository.findById(id).orElse(null);
-
+    
         if (issue == null) {
             throw new RuntimeException("Issue not found");
         }
-
+    
         issue.setTechnicianId(technicianId);
         issue.setAssignedBy(admin);
         issue.setStatus("ASSIGNED");
-
-        return repository.save(issue);
+    
+        Issue savedIssue = repository.save(issue);
+    
+        notificationService.createNotificationForUser(
+                savedIssue.getUserId(),
+                NotificationType.ISSUE_STATUS_CHANGED,
+                "Issue Assigned",
+                "Your issue has been assigned to a technician.",
+                savedIssue.getId()
+        );
+    
+        return savedIssue;
     }
 
     public Issue startProgress(String id, String technicianId) {
         Issue issue = repository.findById(id).orElse(null);
-
+    
         if (issue == null) {
             throw new RuntimeException("Issue not found");
         }
-
+    
         if (issue.getTechnicianId() == null || !issue.getTechnicianId().equals(technicianId)) {
             throw new RuntimeException("Only the assigned technician can start this issue");
         }
-
+    
         issue.setStatus("IN_PROGRESS");
-        return repository.save(issue);
+        Issue savedIssue = repository.save(issue);
+    
+        notificationService.createNotificationForUser(
+                savedIssue.getUserId(),
+                NotificationType.ISSUE_STATUS_CHANGED,
+                "Issue In Progress",
+                "Your reported issue is now in progress.",
+                savedIssue.getId()
+        );
+    
+        return savedIssue;
     }
 
     public Issue resolveIssue(String id, String technicianId, String resolutionNote) {
         Issue issue = repository.findById(id).orElse(null);
-
+    
         if (issue == null) {
             throw new RuntimeException("Issue not found");
         }
-
+    
         if (issue.getTechnicianId() == null || !issue.getTechnicianId().equals(technicianId)) {
             throw new RuntimeException("Only the assigned technician can resolve this issue");
         }
-
+    
         issue.setStatus("FIXED");
         issue.setResolutionNote(resolutionNote);
-
+    
         Issue savedIssue = repository.save(issue);
-
+    
         Resource resource = resourceRepository.findById(issue.getResourceId()).orElse(null);
-
         if (resource != null) {
             resource.setStatus(ResourceStatus.ACTIVE);
             resourceRepository.save(resource);
         }
-
+    
+        notificationService.createNotificationForUser(
+                savedIssue.getUserId(),
+                NotificationType.ISSUE_STATUS_CHANGED,
+                "Issue Resolved",
+                "Your reported issue has been resolved.",
+                savedIssue.getId()
+        );
+    
         return savedIssue;
     }
+
+    
 
     public void deleteIssue(String id) {
         Issue issue = repository.findById(id).orElse(null);

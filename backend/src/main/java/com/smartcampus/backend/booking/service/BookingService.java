@@ -7,6 +7,8 @@ import com.smartcampus.backend.resource.repository.ResourceRepository;
 import com.smartcampus.backend.booking.model.BookingSuggestion;
 import org.springframework.stereotype.Service;
 import com.smartcampus.backend.resource.enums.ResourceStatus;
+import com.smartcampus.backend.notification.model.NotificationType;
+import com.smartcampus.backend.notification.service.NotificationService;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -16,11 +18,15 @@ public class BookingService {
 
     private final BookingRepository repository;
     private final ResourceRepository resourceRepository;
+    private final NotificationService notificationService;
 
-    public BookingService(BookingRepository repository, ResourceRepository resourceRepository) {
+    public BookingService(BookingRepository repository,
+        ResourceRepository resourceRepository,
+        NotificationService notificationService) {
         this.repository = repository;
         this.resourceRepository = resourceRepository;
-    }
+        this.notificationService = notificationService;
+        }
 
     public Booking createBooking(Booking booking) {
 
@@ -102,7 +108,29 @@ public class BookingService {
         existingBooking.setReviewReason(reason);
         existingBooking.setApprovedBy(admin);
     
-        return repository.save(existingBooking);
+        Booking savedBooking = repository.save(existingBooking);
+    
+        if ("APPROVED".equals(status)) {
+            notificationService.createNotificationForUser(
+                    savedBooking.getUserId(),
+                    NotificationType.BOOKING_APPROVED,
+                    "Booking Approved",
+                    "Your booking has been approved.",
+                    savedBooking.getId()
+            );
+        }
+    
+        if ("REJECTED".equals(status)) {
+            notificationService.createNotificationForUser(
+                    savedBooking.getUserId(),
+                    NotificationType.BOOKING_REJECTED,
+                    "Booking Rejected",
+                    "Your booking was rejected. Reason: " + reason,
+                    savedBooking.getId()
+            );
+        }
+    
+        return savedBooking;
     }
 
     public void deleteBooking(String id) {
@@ -150,4 +178,5 @@ public class BookingService {
                 "Suggested next available slot"
         );
     }
+    
 }
