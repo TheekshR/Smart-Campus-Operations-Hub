@@ -18,6 +18,7 @@ import CircleIcon from "@mui/icons-material/Circle";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
+import ProfileDialog from "../common/ProfileDialog";
 
 export default function Topbar({ role = "user" }) {
   const { currentUser } = useCurrentUser();
@@ -25,6 +26,8 @@ export default function Topbar({ role = "user" }) {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileUser, setProfileUser] = useState(null);
 
   const titleMap = {
     user: "User Portal",
@@ -60,6 +63,7 @@ export default function Topbar({ role = "user" }) {
   useEffect(() => {
     if (!currentUser) return;
 
+    setProfileUser(currentUser);
     fetchNotifications();
 
     const interval = setInterval(() => {
@@ -101,116 +105,138 @@ export default function Topbar({ role = "user" }) {
   };
 
   return (
-    <AppBar
-      position="static"
-      elevation={0}
-      sx={{
-        bgcolor: "white",
-        color: "#111827",
-        borderBottom: "1px solid #e5e7eb",
-      }}
-    >
-      <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-        <Typography variant="h6" fontWeight="600">
-          {titleMap[role] || "Smart Campus"}
-        </Typography>
+    <>
+      <AppBar
+        position="static"
+        elevation={0}
+        sx={{
+          bgcolor: "white",
+          color: "#111827",
+          borderBottom: "1px solid #e5e7eb",
+        }}
+      >
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Typography variant="h6" fontWeight="600">
+            {titleMap[role] || "Smart Campus"}
+          </Typography>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <IconButton onClick={handleBellClick}>
-            <Badge badgeContent={unreadCount} color="error">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <IconButton onClick={handleBellClick}>
+              <Badge badgeContent={unreadCount} color="error">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
 
-          <Menu
-            anchorEl={anchorEl}
-            open={open}
-            onClose={handleCloseMenu}
-            PaperProps={{
-              sx: {
-                width: 360,
-                maxWidth: "90vw",
-                mt: 1,
-                borderRadius: 2,
-              },
-            }}
-          >
-            <Box sx={{ px: 2, py: 1.5 }}>
-              <Typography variant="subtitle1" fontWeight="700">
-                Notifications
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {unreadCount} unread
-              </Typography>
-            </Box>
-
-            <Divider />
-
-            {latestNotifications.length === 0 ? (
-              <Box sx={{ px: 2, py: 3 }}>
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleCloseMenu}
+              PaperProps={{
+                sx: {
+                  width: 360,
+                  maxWidth: "90vw",
+                  mt: 1,
+                  borderRadius: 2,
+                },
+              }}
+            >
+              <Box sx={{ px: 2, py: 1.5 }}>
+                <Typography variant="subtitle1" fontWeight="700">
+                  Notifications
+                </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  No notifications available.
+                  {unreadCount} unread
                 </Typography>
               </Box>
-            ) : (
-              latestNotifications.map((notification) => (
-                <MenuItem
-                  key={notification.id}
-                  onClick={() => handleOpenNotification(notification)}
-                  sx={{
-                    alignItems: "flex-start",
-                    py: 1.5,
-                    whiteSpace: "normal",
-                  }}
-                >
-                  <Box sx={{ mr: 1, mt: 0.5 }}>
-                    {!notification.read && (
-                      <CircleIcon sx={{ fontSize: 10, color: "#1976d2" }} />
-                    )}
-                  </Box>
 
-                  <ListItemText
-                    primary={notification.title}
-                    secondary={notification.message}
-                    primaryTypographyProps={{
-                      fontWeight: notification.read ? 500 : 700,
-                      fontSize: 14,
+              <Divider />
+
+              {latestNotifications.length === 0 ? (
+                <Box sx={{ px: 2, py: 3 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No notifications available.
+                  </Typography>
+                </Box>
+              ) : (
+                latestNotifications.map((notification) => (
+                  <MenuItem
+                    key={notification.id}
+                    onClick={() => handleOpenNotification(notification)}
+                    sx={{
+                      alignItems: "flex-start",
+                      py: 1.5,
+                      whiteSpace: "normal",
                     }}
-                    secondaryTypographyProps={{
-                      fontSize: 12,
-                    }}
-                  />
-                </MenuItem>
-              ))
+                  >
+                    <Box sx={{ mr: 1, mt: 0.5 }}>
+                      {!notification.read && (
+                        <CircleIcon sx={{ fontSize: 10, color: "#1976d2" }} />
+                      )}
+                    </Box>
+
+                    <ListItemText
+                      primary={notification.title}
+                      secondary={notification.message}
+                      primaryTypographyProps={{
+                        fontWeight: notification.read ? 500 : 700,
+                        fontSize: 14,
+                      }}
+                      secondaryTypographyProps={{
+                        fontSize: 12,
+                      }}
+                    />
+                  </MenuItem>
+                ))
+              )}
+
+              <Divider />
+
+              <Box sx={{ p: 1.5 }}>
+                <Button fullWidth variant="outlined" onClick={handleViewAll}>
+                  View All Notifications
+                </Button>
+              </Box>
+            </Menu>
+
+            {currentUser && (
+              <Button
+                onClick={() => setProfileOpen(true)}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  textTransform: "none",
+                  color: "#111827",
+                  borderRadius: 999,
+                  px: 1.5,
+                  minWidth: "unset",
+                }}
+              >
+                <Typography variant="body2">
+                  {currentUser.name} ({currentUser.role})
+                </Typography>
+                <Avatar src={currentUser.picture} alt={currentUser.name} />
+              </Button>
             )}
 
-            <Divider />
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              onClick={handleLogout}
+            >
+              Logout
+            </Button>
+          </Box>
+        </Toolbar>
+      </AppBar>
 
-            <Box sx={{ p: 1.5 }}>
-              <Button fullWidth variant="outlined" onClick={handleViewAll}>
-                View All Notifications
-              </Button>
-            </Box>
-          </Menu>
-
-          {currentUser && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Typography variant="body2">
-                {currentUser.name} ({currentUser.role})
-              </Typography>
-              <Avatar src={currentUser.picture} alt={currentUser.name} />
-              <Button
-                variant="outlined"
-                color="error"
-                size="small"
-                onClick={handleLogout}
-              >
-                Logout
-              </Button>
-            </Box>
-          )}
-        </Box>
-      </Toolbar>
-    </AppBar>
+      <ProfileDialog
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        user={profileUser}
+        onProfileUpdated={(updatedUser) => setProfileUser(updatedUser)}
+      />
+    </>
   );
 }

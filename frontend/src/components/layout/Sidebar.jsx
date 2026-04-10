@@ -14,6 +14,7 @@ const menuByRole = {
   admin: [
     { label: "Dashboard", path: "/admin/dashboard" },
     { label: "Manage Resources", path: "/admin/resources" },
+    { label: "Manage Users", path: "/admin/manage-users" },
     { label: "Booking Requests", path: "/admin/booking-requests" },
     { label: "All Bookings", path: "/admin/all-bookings" },
     { label: "All Issues", path: "/admin/all-issues" },

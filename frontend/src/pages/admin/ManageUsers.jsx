@@ -1,0 +1,204 @@
+import { useEffect, useState } from "react";
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Grid,
+  TextField,
+  MenuItem,
+  Button,
+  Alert,
+  Avatar,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import PageHeader from "../../components/common/PageHeader";
+import api from "../../api/axios";
+
+export default function ManageUsers() {
+  const [users, setUsers] = useState([]);
+  const [roleFilter, setRoleFilter] = useState("");
+  const [message, setMessage] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  const fetchUsers = async () => {
+    try {
+      const response = roleFilter
+        ? await api.get(`/api/users/role/${roleFilter}`)
+        : await api.get("/api/users");
+
+      setUsers(response.data || []);
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+      setMessage("Failed to load users.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, [roleFilter]);
+
+  const handleRoleChange = async (userId, newRole) => {
+    try {
+      await api.put(`/api/users/${userId}/role`, null, {
+        params: { role: newRole },
+      });
+
+      setMessage("User role updated successfully.");
+      fetchUsers();
+    } catch (error) {
+      console.error("Failed to update user role:", error);
+      setMessage("Failed to update user role.");
+    }
+  };
+
+  const openDeleteDialog = (user) => {
+    setSelectedUser(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const closeDeleteDialog = () => {
+    setSelectedUser(null);
+    setDeleteDialogOpen(false);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+
+    try {
+      await api.delete(`/api/users/${selectedUser.id}`);
+      setMessage("User deleted successfully.");
+      closeDeleteDialog();
+      fetchUsers();
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      setMessage("Failed to delete user.");
+    }
+  };
+
+  const getRoleColor = (role) => {
+    switch (role) {
+      case "ADMIN":
+        return "error";
+      case "TECHNICIAN":
+        return "warning";
+      case "USER":
+        return "primary";
+      default:
+        return "default";
+    }
+  };
+
+  return (
+    <Box>
+      <PageHeader
+        title="Manage Users"
+        subtitle="View users, filter by role, update roles, and remove accounts."
+      />
+
+      {message && (
+        <Alert
+          severity={message.includes("successfully") ? "success" : "error"}
+          sx={{ mb: 2 }}
+        >
+          {message}
+        </Alert>
+      )}
+
+      <Box sx={{ mb: 3 }}>
+        <TextField
+          select
+          label="Filter by Role"
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          sx={{ minWidth: 220 }}
+        >
+          <MenuItem value="">All</MenuItem>
+          <MenuItem value="USER">USER</MenuItem>
+          <MenuItem value="ADMIN">ADMIN</MenuItem>
+          <MenuItem value="TECHNICIAN">TECHNICIAN</MenuItem>
+        </TextField>
+      </Box>
+
+      <Grid container spacing={3}>
+        {users.map((user) => (
+          <Grid item xs={12} md={6} lg={4} key={user.id}>
+            <Card sx={{ borderRadius: 3, boxShadow: 2, height: "100%" }}>
+              <CardContent>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+                  <Avatar src={user.picture} alt={user.name} sx={{ width: 56, height: 56 }} />
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">
+                      {user.name || "Unnamed User"}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {user.email}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ mb: 1.5 }}>
+                  <Chip label={user.role} color={getRoleColor(user.role)} />
+                </Box>
+
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  <strong>Phone:</strong> {user.phone || "-"}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  <strong>Department:</strong> {user.department || "-"}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1.5 }}>
+                  <strong>Bio:</strong> {user.bio || "-"}
+                </Typography>
+
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Change Role"
+                  value={user.role || ""}
+                  onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                  sx={{ mb: 2 }}
+                >
+                  <MenuItem value="USER">USER</MenuItem>
+                  <MenuItem value="ADMIN">ADMIN</MenuItem>
+                  <MenuItem value="TECHNICIAN">TECHNICIAN</MenuItem>
+                </TextField>
+
+                <Button
+                  variant="outlined"
+                  color="error"
+                  fullWidth
+                  onClick={() => openDeleteDialog(user)}
+                >
+                  Delete User
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      <Dialog open={deleteDialogOpen} onClose={closeDeleteDialog} fullWidth maxWidth="xs">
+        <DialogTitle>Delete User</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete{" "}
+            <strong>{selectedUser?.name || selectedUser?.email}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDeleteDialog}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleDeleteUser}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+}
