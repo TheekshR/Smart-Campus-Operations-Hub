@@ -20,6 +20,13 @@ const menuByRole = {
     { label: "Assign Technician", path: "/admin/assign-technician" },
     { label: "Notifications", path: "/admin/notifications" },
   ],
+  technician: [
+    { label: "Dashboard", path: "/technician/dashboard" },
+    { label: "Assigned Tickets", path: "/technician/assigned-tickets" },
+    { label: "In Progress Tickets", path: "/technician/in-progress-tickets" },
+    { label: "Resolved Tickets", path: "/technician/resolved-tickets" },
+    { label: "Notifications", path: "/technician/notifications" },
+  ],
 };
 
 export default function Sidebar({ role = "user" }) {
@@ -30,7 +37,7 @@ export default function Sidebar({ role = "user" }) {
     <Box
       sx={{
         width: 270,
-        bgcolor: "#0a0a0a",           // Deep futuristic black
+        bgcolor: "#0a0a0a",
         color: "#ffffff",
         minHeight: "100vh",
         borderRight: "1px solid #1f1f1f",
@@ -53,40 +60,49 @@ export default function Sidebar({ role = "user" }) {
         sx={{
           borderBottom: "1px solid #1f1f1f",
           px: 3,
-          py: 2.5,
+          py: 3.5,
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           gap: 1.5,
         }}
       >
+        {/* Campus Logo - Bigger and Above the Text */}
         <Box
           sx={{
-            width: 28,
-            height: 28,
-            bgcolor: "#ffffff",
-            borderRadius: "4px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "18px",
-            fontWeight: "bold",
-            color: "#000000",
-            boxShadow: "0 0 15px rgba(255,255,255,0.3)",
+            width: 48,
+            height: 48,
+            borderRadius: "8px",
+            overflow: "hidden",
+            flexShrink: 0,
+            boxShadow: "0 0 20px rgba(255,255,255,0.25)",
+            mb: 1,
           }}
         >
-          ⚡
+          <img
+            src="/logo.png"        // Change if your logo filename is different
+            alt="Campus Logo"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+            }}
+          />
         </Box>
+
+        {/* Title */}
         <Typography
           variant="h6"
-          fontWeight="700"
-          letterSpacing="0.5px"
+          fontWeight="800"
+          letterSpacing="0.6px"
           sx={{
             background: "linear-gradient(90deg, #ffffff, #cccccc)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
+            textAlign: "center",
           }}
         >
-          SMART CAMPUS
+          CAMPUS SYNC
         </Typography>
       </Toolbar>
 
