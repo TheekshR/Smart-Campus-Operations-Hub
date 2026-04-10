@@ -4,13 +4,15 @@ import com.smartcampus.backend.issue.model.Issue;
 import com.smartcampus.backend.issue.repository.IssueRepository;
 import com.smartcampus.backend.notification.model.NotificationType;
 import com.smartcampus.backend.notification.service.NotificationService;
-import com.smartcampus.backend.resource.model.Resource;
 import com.smartcampus.backend.resource.enums.ResourceStatus;
+import com.smartcampus.backend.resource.model.Resource;
 import com.smartcampus.backend.resource.repository.ResourceRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 @Service
@@ -57,15 +59,24 @@ public class IssueService {
         issue.setResolutionNote(null);
         issue.setAssignedBy(null);
 
-        List<String> imageUrls = new ArrayList<>();
+        List<String> imageBase64List = new ArrayList<>();
+        List<String> imageTypes = new ArrayList<>();
+
         if (images != null) {
             for (MultipartFile image : images) {
                 if (!image.isEmpty()) {
-                    imageUrls.add(image.getOriginalFilename());
+                    try {
+                        imageBase64List.add(Base64.getEncoder().encodeToString(image.getBytes()));
+                        imageTypes.add(image.getContentType());
+                    } catch (IOException e) {
+                        throw new RuntimeException("Failed to process uploaded image");
+                    }
                 }
             }
         }
-        issue.setImageUrls(imageUrls);
+
+        issue.setImageBase64List(imageBase64List);
+        issue.setImageTypes(imageTypes);
 
         Issue savedIssue = repository.save(issue);
 

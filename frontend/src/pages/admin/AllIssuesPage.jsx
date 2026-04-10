@@ -101,7 +101,43 @@ export default function AllIssuesPage() {
 
           return (
             <Grid item xs={12} md={6} lg={4} key={issue.id}>
-              <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
+              <Card sx={{ borderRadius: 3, boxShadow: 2, overflow: "hidden" }}>
+                {issue.imageBase64List &&
+                  issue.imageTypes &&
+                  issue.imageBase64List.length > 0 && (
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          issue.imageBase64List.length === 1
+                            ? "1fr"
+                            : issue.imageBase64List.length === 2
+                            ? "1fr 1fr"
+                            : "1fr 1fr 1fr",
+                        gap: 0.5,
+                        p: 1,
+                        pb: 0,
+                      }}
+                    >
+                      {issue.imageBase64List.map((imageBase64, index) => (
+                        <Box
+                          key={index}
+                          component="img"
+                          src={`data:${issue.imageTypes[index]};base64,${imageBase64}`}
+                          alt={`Issue evidence ${index + 1}`}
+                          sx={{
+                            width: "100%",
+                            height: 120,
+                            objectFit: "cover",
+                            borderRadius: 2,
+                            display: "block",
+                            border: "1px solid #e5e7eb",
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  )}
+
                 <CardContent>
                   <Typography variant="h6" fontWeight="bold">
                     Issue #{issue.id?.slice(-6)}
@@ -127,9 +163,10 @@ export default function AllIssuesPage() {
                   <Typography>
                     Assigned By: {issue.assignedBy || "-"}
                   </Typography>
-                  <Typography>
+                  <Typography sx={{ mb: 1 }}>
                     Resolution Note: {issue.resolutionNote || "-"}
                   </Typography>
+
                   <IssueCommentsSection issueId={issue.id} />
                 </CardContent>
               </Card>

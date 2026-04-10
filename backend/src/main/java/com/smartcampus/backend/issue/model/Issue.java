@@ -32,6 +32,9 @@ public class Issue {
     private String resolutionNote;
     private String assignedBy;
 
-    // store uploaded image file names or paths
-    private List<String> imageUrls;
+    // ✅ NEW: store images as Base64
+    private List<String> imageBase64List;
+
+    // ✅ NEW: store image types (image/jpeg, image/png, etc)
+    private List<String> imageTypes;
 }
