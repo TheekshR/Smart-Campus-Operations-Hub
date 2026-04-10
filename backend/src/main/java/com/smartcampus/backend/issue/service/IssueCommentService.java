@@ -48,11 +48,11 @@ public class IssueCommentService {
     public IssueComment addComment(String issueId, AddCommentRequest request, String email) {
         User currentUser = getCurrentUser(email);
         Issue issue = getIssue(issueId);
-
+    
         if (!canAccessIssueComments(currentUser, issue)) {
             throw new AccessDeniedException("You are not allowed to comment on this ticket");
         }
-
+    
         IssueComment comment = new IssueComment();
         comment.setIssueId(issueId);
         comment.setUserId(currentUser.getId());
@@ -61,9 +61,10 @@ public class IssueCommentService {
         comment.setMessage(request.getMessage());
         comment.setCreatedAt(Instant.now().toString());
         comment.setUpdatedAt(null);
-
+    
         IssueComment savedComment = commentRepository.save(comment);
-
+    
+        // Notify ticket owner if commenter is not the owner
         if (!currentUser.getId().equals(issue.getUserId())) {
             notificationService.createNotificationForUser(
                     issue.getUserId(),
@@ -73,7 +74,21 @@ public class IssueCommentService {
                     issue.getId()
             );
         }
-
+    
+        // Notify assigned technician if exists and commenter is not the technician
+        if (issue.getTechnicianId() != null
+                && !issue.getTechnicianId().isBlank()
+                && !currentUser.getId().equals(issue.getTechnicianId())) {
+    
+            notificationService.createNotificationForUser(
+                    issue.getTechnicianId(),
+                    NotificationType.ISSUE_COMMENT_ADDED,
+                    "New Comment on Assigned Ticket",
+                    currentUser.getName() + " added a new comment on an issue assigned to you.",
+                    issue.getId()
+            );
+        }
+    
         return savedComment;
     }
 

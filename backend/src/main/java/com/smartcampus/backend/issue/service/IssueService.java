@@ -114,17 +114,18 @@ public class IssueService {
 
     public Issue assignTechnician(String id, String technicianId, String admin) {
         Issue issue = repository.findById(id).orElse(null);
-
+    
         if (issue == null) {
             throw new RuntimeException("Issue not found");
         }
-
+    
         issue.setTechnicianId(technicianId);
         issue.setAssignedBy(admin);
         issue.setStatus("ASSIGNED");
-
+    
         Issue savedIssue = repository.save(issue);
-
+    
+        // Notify ticket owner
         notificationService.createNotificationForUser(
                 savedIssue.getUserId(),
                 NotificationType.ISSUE_STATUS_CHANGED,
@@ -132,7 +133,18 @@ public class IssueService {
                 "Your issue has been assigned to a technician.",
                 savedIssue.getId()
         );
-
+    
+        // Notify assigned technician
+        if (technicianId != null && !technicianId.isBlank()) {
+            notificationService.createNotificationForUser(
+                    technicianId,
+                    NotificationType.ISSUE_STATUS_CHANGED,
+                    "New Task Assigned",
+                    "A new issue has been assigned to you.",
+                    savedIssue.getId()
+            );
+        }
+    
         return savedIssue;
     }
 
