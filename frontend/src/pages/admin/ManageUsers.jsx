@@ -29,6 +29,10 @@ export default function ManageUsers() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [roleChangeUser, setRoleChangeUser] = useState(null);
+  const [selectedRole, setSelectedRole] = useState("");
+
   const fetchUsers = async () => {
     try {
       const response = roleFilter
@@ -46,13 +50,28 @@ export default function ManageUsers() {
     fetchUsers();
   }, [roleFilter]);
 
-  const handleRoleChange = async (user, newRole) => {
+  const openRoleDialog = (user, newRole) => {
+    setRoleChangeUser(user);
+    setSelectedRole(newRole);
+    setRoleDialogOpen(true);
+  };
+
+  const closeRoleDialog = () => {
+    setRoleChangeUser(null);
+    setSelectedRole("");
+    setRoleDialogOpen(false);
+  };
+
+  const confirmRoleChange = async () => {
+    if (!roleChangeUser || !selectedRole) return;
+
     try {
-      await api.put(`/api/users/${user.id}/role`, null, {
-        params: { role: newRole },
+      await api.put(`/api/users/${roleChangeUser.id}/role`, null, {
+        params: { role: selectedRole },
       });
 
       setMessage("User role updated successfully.");
+      closeRoleDialog();
       fetchUsers();
     } catch (error) {
       console.error("Failed to update user role:", error);
@@ -162,35 +181,32 @@ export default function ManageUsers() {
                     <strong>Department:</strong> {user.department || "-"}
                   </Typography>
 
-                  {/* ROLE CHANGE */}
                   <TextField
                     select
                     fullWidth
                     size="small"
                     label="Change Role"
                     value={user.role}
-                    onChange={(e) => handleRoleChange(user, e.target.value)}
+                    onChange={(e) => openRoleDialog(user, e.target.value)}
                     sx={{ mt: 2 }}
-                    disabled={isAdmin || isSelf} // 🚫 restriction
+                    disabled={isAdmin || isSelf}
                   >
                     <MenuItem value="USER">USER</MenuItem>
                     <MenuItem value="ADMIN">ADMIN</MenuItem>
                     <MenuItem value="TECHNICIAN">TECHNICIAN</MenuItem>
                   </TextField>
 
-                  {/* DELETE BUTTON */}
                   <Button
                     variant="outlined"
                     color="error"
                     fullWidth
                     sx={{ mt: 2 }}
                     onClick={() => openDeleteDialog(user)}
-                    disabled={isAdmin || isSelf} // 🚫 restriction
+                    disabled={isAdmin || isSelf}
                   >
                     Delete User
                   </Button>
 
-                  {/* INFO TEXT */}
                   {(isAdmin || isSelf) && (
                     <Typography
                       variant="caption"
@@ -208,6 +224,23 @@ export default function ManageUsers() {
           );
         })}
       </Grid>
+
+      <Dialog open={roleDialogOpen} onClose={closeRoleDialog}>
+        <DialogTitle>Confirm Role Change</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to change{" "}
+            <strong>{roleChangeUser?.name || roleChangeUser?.email}</strong>'s role to{" "}
+            <strong>{selectedRole}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeRoleDialog}>Cancel</Button>
+          <Button variant="contained" onClick={confirmRoleChange}>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={deleteDialogOpen} onClose={closeDeleteDialog}>
         <DialogTitle>Delete User</DialogTitle>

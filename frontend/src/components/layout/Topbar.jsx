@@ -12,6 +12,10 @@ import {
   ListItemText,
   Divider,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import CircleIcon from "@mui/icons-material/Circle";
@@ -28,6 +32,7 @@ export default function Topbar({ role = "user" }) {
   const [notifications, setNotifications] = useState([]);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileUser, setProfileUser] = useState(null);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   const titleMap = {
     user: "User Portal",
@@ -100,7 +105,15 @@ export default function Topbar({ role = "user" }) {
     navigate(notificationRouteMap[role] || "/user/notifications");
   };
 
-  const handleLogout = () => {
+  const openLogoutDialog = () => {
+    setLogoutDialogOpen(true);
+  };
+
+  const closeLogoutDialog = () => {
+    setLogoutDialogOpen(false);
+  };
+
+  const confirmLogout = () => {
     window.location.href = "http://localhost:8081/logout";
   };
 
@@ -223,7 +236,7 @@ export default function Topbar({ role = "user" }) {
               variant="outlined"
               color="error"
               size="small"
-              onClick={handleLogout}
+              onClick={openLogoutDialog}
             >
               Logout
             </Button>
@@ -237,6 +250,21 @@ export default function Topbar({ role = "user" }) {
         user={profileUser}
         onProfileUpdated={(updatedUser) => setProfileUser(updatedUser)}
       />
+
+      <Dialog open={logoutDialogOpen} onClose={closeLogoutDialog}>
+        <DialogTitle>Confirm Logout</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to logout from the system?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeLogoutDialog}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={confirmLogout}>
+            Logout
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
