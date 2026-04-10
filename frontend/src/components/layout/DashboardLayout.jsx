@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { Box } from "@mui/material";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import ChatWidget from "../common/ChatWidget";
 
 export default function DashboardLayout({ role }) {
   return (
@@ -13,6 +14,7 @@ export default function DashboardLayout({ role }) {
           <Outlet />
         </Box>
       </Box>
+      {role === "user" && <ChatWidget />}
     </Box>
   );
 }
