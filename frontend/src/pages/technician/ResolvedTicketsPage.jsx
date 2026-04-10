@@ -9,10 +9,10 @@ import {
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
-
-const TECHNICIAN_ID = "TECH001";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 export default function ResolvedTicketsPage() {
+  const { currentUser, loading, error } = useCurrentUser();
   const [issues, setIssues] = useState([]);
   const [resourceMap, setResourceMap] = useState({});
 
@@ -23,14 +23,14 @@ export default function ResolvedTicketsPage() {
         api.get("/api/resources"),
       ]);
 
-      const filteredIssues = issuesRes.data.filter(
-        (issue) => issue.technicianId === TECHNICIAN_ID
+      const filteredIssues = (issuesRes.data || []).filter(
+        (issue) => issue.technicianId === currentUser?.id
       );
 
       setIssues(filteredIssues);
 
       const map = {};
-      resourcesRes.data.forEach((resource) => {
+      (resourcesRes.data || []).forEach((resource) => {
         map[resource.id] = resource;
       });
       setResourceMap(map);
@@ -40,8 +40,18 @@ export default function ResolvedTicketsPage() {
   };
 
   useEffect(() => {
-    fetchResolvedIssues();
-  }, []);
+    if (currentUser) {
+      fetchResolvedIssues();
+    }
+  }, [currentUser]);
+
+  if (loading) {
+    return <Box sx={{ p: 3 }}>Loading...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ p: 3 }}>{error}</Box>;
+  }
 
   return (
     <Box>

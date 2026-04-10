@@ -10,10 +10,10 @@ import {
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
-
-const TECHNICIAN_ID = "TECH001";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 export default function AssignedTicketsPage() {
+  const { currentUser, loading, error } = useCurrentUser();
   const [issues, setIssues] = useState([]);
   const [resourceMap, setResourceMap] = useState({});
   const [message, setMessage] = useState("");
@@ -25,14 +25,14 @@ export default function AssignedTicketsPage() {
         api.get("/api/resources"),
       ]);
 
-      const filteredIssues = issuesRes.data.filter(
-        (issue) => issue.technicianId === TECHNICIAN_ID
+      const filteredIssues = (issuesRes.data || []).filter(
+        (issue) => issue.technicianId === currentUser?.id
       );
 
       setIssues(filteredIssues);
 
       const map = {};
-      resourcesRes.data.forEach((resource) => {
+      (resourcesRes.data || []).forEach((resource) => {
         map[resource.id] = resource;
       });
       setResourceMap(map);
@@ -42,21 +42,35 @@ export default function AssignedTicketsPage() {
   };
 
   useEffect(() => {
-    fetchAssignedIssues();
-  }, []);
+    if (currentUser) {
+      fetchAssignedIssues();
+    }
+  }, [currentUser]);
 
   const handleStart = async (issueId) => {
     try {
       await api.put(`/api/issues/${issueId}/start`, null, {
-        params: { technicianId: TECHNICIAN_ID },
+        params: { technicianId: currentUser.id },
       });
       setMessage("Issue moved to IN_PROGRESS.");
       fetchAssignedIssues();
     } catch (error) {
       console.error("Failed to start issue:", error);
-      setMessage("Failed to start issue.");
+      setMessage(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Failed to start issue."
+      );
     }
   };
+
+  if (loading) {
+    return <Box sx={{ p: 3 }}>Loading...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ p: 3 }}>{error}</Box>;
+  }
 
   return (
     <Box>
@@ -66,7 +80,10 @@ export default function AssignedTicketsPage() {
       />
 
       {message && (
-        <Alert severity={message.includes("IN_PROGRESS") ? "success" : "error"} sx={{ mb: 2 }}>
+        <Alert
+          severity={message.includes("IN_PROGRESS") ? "success" : "error"}
+          sx={{ mb: 2 }}
+        >
           {message}
         </Alert>
       )}

@@ -15,10 +15,10 @@ import {
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
-
-const TECHNICIAN_ID = "TECH001";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 export default function InProgressTicketsPage() {
+  const { currentUser, loading, error } = useCurrentUser();
   const [issues, setIssues] = useState([]);
   const [resourceMap, setResourceMap] = useState({});
   const [message, setMessage] = useState("");
@@ -33,14 +33,14 @@ export default function InProgressTicketsPage() {
         api.get("/api/resources"),
       ]);
 
-      const filteredIssues = issuesRes.data.filter(
-        (issue) => issue.technicianId === TECHNICIAN_ID
+      const filteredIssues = (issuesRes.data || []).filter(
+        (issue) => issue.technicianId === currentUser?.id
       );
 
       setIssues(filteredIssues);
 
       const map = {};
-      resourcesRes.data.forEach((resource) => {
+      (resourcesRes.data || []).forEach((resource) => {
         map[resource.id] = resource;
       });
       setResourceMap(map);
@@ -50,8 +50,10 @@ export default function InProgressTicketsPage() {
   };
 
   useEffect(() => {
-    fetchInProgressIssues();
-  }, []);
+    if (currentUser) {
+      fetchInProgressIssues();
+    }
+  }, [currentUser]);
 
   const openResolveDialog = (issueId) => {
     setSelectedIssueId(issueId);
@@ -69,7 +71,7 @@ export default function InProgressTicketsPage() {
     try {
       await api.put(`/api/issues/${selectedIssueId}/resolve`, null, {
         params: {
-          technicianId: TECHNICIAN_ID,
+          technicianId: currentUser.id,
           resolutionNote,
         },
       });
@@ -78,9 +80,21 @@ export default function InProgressTicketsPage() {
       fetchInProgressIssues();
     } catch (error) {
       console.error("Failed to resolve issue:", error);
-      setMessage("Failed to resolve issue.");
+      setMessage(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Failed to resolve issue."
+      );
     }
   };
+
+  if (loading) {
+    return <Box sx={{ p: 3 }}>Loading...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ p: 3 }}>{error}</Box>;
+  }
 
   return (
     <Box>
@@ -90,7 +104,10 @@ export default function InProgressTicketsPage() {
       />
 
       {message && (
-        <Alert severity={message.includes("successfully") ? "success" : "error"} sx={{ mb: 2 }}>
+        <Alert
+          severity={message.includes("successfully") ? "success" : "error"}
+          sx={{ mb: 2 }}
+        >
           {message}
         </Alert>
       )}

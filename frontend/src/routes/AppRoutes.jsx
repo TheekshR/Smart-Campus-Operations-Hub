@@ -17,6 +17,12 @@ import AllIssuesPage from "../pages/admin/AllIssuesPage";
 import AssignTechnicianPage from "../pages/admin/AssignTechnicianPage";
 import AdminNotificationsPage from "../pages/admin/AdminNotificationsPage";
 
+import TechnicianDashboard from "../pages/technician/TechnicianDashboard";
+import AssignedTicketsPage from "../pages/technician/AssignedTicketsPage";
+import InProgressTicketsPage from "../pages/technician/InProgressTicketsPage";
+import ResolvedTicketsPage from "../pages/technician/ResolvedTicketsPage";
+import TechnicianNotificationsPage from "../pages/technician/TechnicianNotificationsPage";
+
 import NotFoundPage from "../pages/NotFoundPage";
 
 export default function AppRoutes() {
@@ -46,7 +52,11 @@ export default function AppRoutes() {
         </Route>
 
         <Route element={<DashboardLayout role="technician" />}>
-          <Route path="/technician/dashboard" element={<UserDashboard />} />
+          <Route path="/technician/dashboard" element={<TechnicianDashboard />} />
+          <Route path="/technician/assigned-tickets" element={<AssignedTicketsPage />} />
+          <Route path="/technician/in-progress-tickets" element={<InProgressTicketsPage />} />
+          <Route path="/technician/resolved-tickets" element={<ResolvedTicketsPage />} />
+          <Route path="/technician/notifications" element={<TechnicianNotificationsPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
