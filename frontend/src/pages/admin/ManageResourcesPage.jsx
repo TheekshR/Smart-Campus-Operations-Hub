@@ -34,6 +34,7 @@ export default function ManageResourcesPage() {
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [formData, setFormData] = useState(initialForm);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -66,6 +67,7 @@ export default function ManageResourcesPage() {
   const handleOpenCreate = () => {
     setEditingId(null);
     setFormData(initialForm);
+    setSelectedImage(null);
     setOpen(true);
   };
 
@@ -80,12 +82,14 @@ export default function ManageResourcesPage() {
       availabilityStart: resource.availabilityStart || "",
       availabilityEnd: resource.availabilityEnd || "",
     });
+    setSelectedImage(null);
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
     setFormData(initialForm);
+    setSelectedImage(null);
     setEditingId(null);
   };
 
@@ -97,18 +101,39 @@ export default function ManageResourcesPage() {
     }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0] || null;
+    setSelectedImage(file);
+  };
+
   const handleSave = async () => {
     try {
-      const payload = {
-        ...formData,
-        capacity: Number(formData.capacity),
-      };
+      const form = new FormData();
+      form.append("name", formData.name);
+      form.append("type", formData.type);
+      form.append("capacity", Number(formData.capacity));
+      form.append("location", formData.location);
+      form.append("status", formData.status);
+      form.append("availabilityStart", formData.availabilityStart || "");
+      form.append("availabilityEnd", formData.availabilityEnd || "");
+
+      if (selectedImage) {
+        form.append("image", selectedImage);
+      }
 
       if (editingId) {
-        await api.put(`/api/resources/${editingId}`, payload);
+        await api.put(`/api/resources/${editingId}`, form, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
         setMessage("Resource updated successfully.");
       } else {
-        await api.post("/api/resources", payload);
+        await api.post("/api/resources", form, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
         setMessage("Resource created successfully.");
       }
 
@@ -227,12 +252,27 @@ export default function ManageResourcesPage() {
                 boxShadow: "0 4px 20px rgba(0, 0, 0, 0.06)",
                 border: "1px solid #f0f0f0",
                 transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                overflow: "hidden",
                 "&:hover": {
                   transform: "translateY(-4px)",
                   boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
                 },
               }}
             >
+              {resource.imageBase64 && resource.imageType && (
+                <Box
+                  component="img"
+                  src={`data:${resource.imageType};base64,${resource.imageBase64}`}
+                  alt={resource.name}
+                  sx={{
+                    width: "100%",
+                    height: 180,
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+              )}
+
               <CardContent sx={{ p: 3.5 }}>
                 <Typography
                   variant="h6"
@@ -375,6 +415,22 @@ export default function ManageResourcesPage() {
             InputLabelProps={{ shrink: true }}
             size="small"
           />
+
+          <Button variant="outlined" component="label">
+            {selectedImage ? "Change Image" : "Upload One Image"}
+            <input
+              type="file"
+              hidden
+              accept="image/*"
+              onChange={handleImageChange}
+            />
+          </Button>
+
+          {selectedImage && (
+            <Typography variant="body2" color="text.secondary">
+              Selected image: {selectedImage.name}
+            </Typography>
+          )}
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 3 }}>

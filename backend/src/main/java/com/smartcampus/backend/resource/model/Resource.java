@@ -30,4 +30,7 @@ public class Resource {
 
     private String availabilityStart;
     private String availabilityEnd;
+
+    private String imageBase64;
+    private String imageType;
 }

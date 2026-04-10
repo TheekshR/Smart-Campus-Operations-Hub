@@ -82,7 +82,27 @@ export default function ViewResourcesPage() {
       <Grid container spacing={3}>
         {resources.map((resource) => (
           <Grid item xs={12} md={6} lg={4} key={resource.id}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
+            <Card
+              sx={{
+                borderRadius: 3,
+                boxShadow: 2,
+                overflow: "hidden",
+              }}
+            >
+              {resource.imageBase64 && resource.imageType && (
+                <Box
+                  component="img"
+                  src={`data:${resource.imageType};base64,${resource.imageBase64}`}
+                  alt={resource.name}
+                  sx={{
+                    width: "100%",
+                    height: 180,
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+              )}
+
               <CardContent>
                 <Typography variant="h6" fontWeight="bold">
                   {resource.name}

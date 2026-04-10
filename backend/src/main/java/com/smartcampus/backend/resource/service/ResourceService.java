@@ -5,7 +5,10 @@ import com.smartcampus.backend.resource.enums.ResourceType;
 import com.smartcampus.backend.resource.model.Resource;
 import com.smartcampus.backend.resource.repository.ResourceRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,12 +21,36 @@ public class ResourceService {
         this.repository = repository;
     }
 
-    public Resource createResource(Resource resource) {
+    public Resource createResourceWithImage(String name,
+                                            String type,
+                                            int capacity,
+                                            String location,
+                                            String status,
+                                            String availabilityStart,
+                                            String availabilityEnd,
+                                            MultipartFile image) {
+        Resource resource = new Resource();
+        resource.setName(name);
+        resource.setType(ResourceType.valueOf(type.toUpperCase()));
+        resource.setCapacity(capacity);
+        resource.setLocation(location);
+        resource.setStatus(ResourceStatus.valueOf(status.toUpperCase()));
+        resource.setAvailabilityStart(availabilityStart);
+        resource.setAvailabilityEnd(availabilityEnd);
+
+        if (image != null && !image.isEmpty()) {
+            try {
+                resource.setImageBase64(Base64.getEncoder().encodeToString(image.getBytes()));
+                resource.setImageType(image.getContentType());
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to process image");
+            }
+        }
+
         return repository.save(resource);
     }
 
     public List<Resource> getFilteredResources(String type, String location, String status, Integer minCapacity) {
-
         ResourceType resourceType = (type != null && !type.isBlank())
                 ? ResourceType.valueOf(type.toUpperCase())
                 : null;
@@ -67,21 +94,38 @@ public class ResourceService {
         return repository.findById(id).orElse(null);
     }
 
-    public Resource updateResource(String id, Resource updatedResource) {
+    public Resource updateResourceWithImage(String id,
+                                            String name,
+                                            String type,
+                                            int capacity,
+                                            String location,
+                                            String status,
+                                            String availabilityStart,
+                                            String availabilityEnd,
+                                            MultipartFile image) {
         Resource existingResource = repository.findById(id).orElse(null);
 
         if (existingResource == null) {
             return null;
         }
 
-        existingResource.setName(updatedResource.getName());
-        existingResource.setType(updatedResource.getType());
-        existingResource.setCapacity(updatedResource.getCapacity());
-        existingResource.setLocation(updatedResource.getLocation());
-        existingResource.setStatus(updatedResource.getStatus());
-        existingResource.setAvailabilityStart(updatedResource.getAvailabilityStart());
-        existingResource.setAvailabilityEnd(updatedResource.getAvailabilityEnd());
-        
+        existingResource.setName(name);
+        existingResource.setType(ResourceType.valueOf(type.toUpperCase()));
+        existingResource.setCapacity(capacity);
+        existingResource.setLocation(location);
+        existingResource.setStatus(ResourceStatus.valueOf(status.toUpperCase()));
+        existingResource.setAvailabilityStart(availabilityStart);
+        existingResource.setAvailabilityEnd(availabilityEnd);
+
+        if (image != null && !image.isEmpty()) {
+            try {
+                existingResource.setImageBase64(Base64.getEncoder().encodeToString(image.getBytes()));
+                existingResource.setImageType(image.getContentType());
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to process image");
+            }
+        }
+
         return repository.save(existingResource);
     }
 
