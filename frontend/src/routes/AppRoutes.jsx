@@ -45,6 +45,10 @@ export default function AppRoutes() {
           <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
         </Route>
 
+        <Route element={<DashboardLayout role="technician" />}>
+          <Route path="/technician/dashboard" element={<UserDashboard />} />
+        </Route>
+
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 const initialForm = {
   name: "",
@@ -28,6 +29,7 @@ const initialForm = {
 };
 
 export default function ManageResourcesPage() {
+  const { currentUser, loading, error } = useCurrentUser();
   const [resources, setResources] = useState([]);
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -38,21 +40,28 @@ export default function ManageResourcesPage() {
 
   const fetchResources = async () => {
     try {
-      const response = await api.get("/api/resources", {
-        params: {
-          type: typeFilter || undefined,
-          status: statusFilter || undefined,
-        },
-      });
-      setResources(response.data);
+      const response = await api.get("/api/resources");
+      let data = response.data || [];
+
+      if (typeFilter) {
+        data = data.filter((resource) => resource.type === typeFilter);
+      }
+
+      if (statusFilter) {
+        data = data.filter((resource) => resource.status === statusFilter);
+      }
+
+      setResources(data);
     } catch (error) {
       console.error("Failed to fetch resources:", error);
     }
   };
 
   useEffect(() => {
-    fetchResources();
-  }, [typeFilter, statusFilter]);
+    if (currentUser) {
+      fetchResources();
+    }
+  }, [currentUser, typeFilter, statusFilter]);
 
   const handleOpenCreate = () => {
     setEditingId(null);
@@ -107,7 +116,11 @@ export default function ManageResourcesPage() {
       fetchResources();
     } catch (error) {
       console.error("Failed to save resource:", error);
-      setMessage("Failed to save resource.");
+      setMessage(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Failed to save resource."
+      );
     }
   };
 
@@ -118,9 +131,21 @@ export default function ManageResourcesPage() {
       fetchResources();
     } catch (error) {
       console.error("Failed to delete resource:", error);
-      setMessage("Failed to delete resource.");
+      setMessage(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Failed to delete resource."
+      );
     }
   };
+
+  if (loading) {
+    return <Box sx={{ p: 3 }}>Loading...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ p: 3 }}>{error}</Box>;
+  }
 
   return (
     <Box sx={{ p: { xs: 3, md: 5 }, bgcolor: "#ffffff", minHeight: "100vh" }}>
@@ -130,22 +155,21 @@ export default function ManageResourcesPage() {
       />
 
       {message && (
-        <Alert 
-          severity={message.includes("successfully") ? "success" : "error"} 
+        <Alert
+          severity={message.includes("successfully") ? "success" : "error"}
           sx={{ mb: 3, borderRadius: 2 }}
         >
           {message}
         </Alert>
       )}
 
-      {/* Filters & Add Button */}
-      <Box 
-        sx={{ 
-          display: "flex", 
-          gap: 2, 
-          mb: 5, 
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          mb: 5,
           flexWrap: "wrap",
-          alignItems: "center" 
+          alignItems: "center",
         }}
       >
         <TextField
@@ -176,8 +200,8 @@ export default function ManageResourcesPage() {
           <MenuItem value="OUT_OF_SERVICE">OUT_OF_SERVICE</MenuItem>
         </TextField>
 
-        <Button 
-          variant="contained" 
+        <Button
+          variant="contained"
           onClick={handleOpenCreate}
           sx={{
             bgcolor: "#000000",
@@ -194,26 +218,25 @@ export default function ManageResourcesPage() {
         </Button>
       </Box>
 
-      {/* Resources Grid */}
       <Grid container spacing={4}>
         {resources.map((resource) => (
           <Grid item xs={12} md={6} lg={4} key={resource.id}>
-            <Card 
-              sx={{ 
-                borderRadius: 3, 
+            <Card
+              sx={{
+                borderRadius: 3,
                 boxShadow: "0 4px 20px rgba(0, 0, 0, 0.06)",
                 border: "1px solid #f0f0f0",
                 transition: "transform 0.2s ease, box-shadow 0.2s ease",
                 "&:hover": {
                   transform: "translateY(-4px)",
                   boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
-                }
+                },
               }}
             >
               <CardContent sx={{ p: 3.5 }}>
-                <Typography 
-                  variant="h6" 
-                  fontWeight="700" 
+                <Typography
+                  variant="h6"
+                  fontWeight="700"
                   sx={{ color: "#000000", mb: 2 }}
                 >
                   {resource.name}
@@ -233,15 +256,16 @@ export default function ManageResourcesPage() {
                     Status: <strong>{resource.status}</strong>
                   </Typography>
                   <Typography sx={{ color: "#555555", fontSize: "0.95rem" }}>
-                    Available: <strong>
+                    Available:{" "}
+                    <strong>
                       {resource.availabilityStart || "-"} — {resource.availabilityEnd || "-"}
                     </strong>
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: "flex", gap: 1.5 }}>
-                  <Button 
-                    variant="outlined" 
+                  <Button
+                    variant="outlined"
                     onClick={() => handleOpenEdit(resource)}
                     sx={{
                       borderColor: "#000000",
@@ -251,9 +275,9 @@ export default function ManageResourcesPage() {
                   >
                     Edit
                   </Button>
-                  <Button 
-                    variant="outlined" 
-                    color="error" 
+                  <Button
+                    variant="outlined"
+                    color="error"
                     onClick={() => handleDelete(resource.id)}
                     sx={{
                       borderColor: "#d32f2f",
@@ -269,37 +293,36 @@ export default function ManageResourcesPage() {
         ))}
       </Grid>
 
-      {/* Add/Edit Dialog */}
-      <Dialog 
-        open={open} 
-        onClose={handleClose} 
-        fullWidth 
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        fullWidth
         maxWidth="sm"
         PaperProps={{
-          sx: { 
-            borderRadius: 3, 
-            boxShadow: "0 10px 40px rgba(0,0,0,0.1)" 
-          }
+          sx: {
+            borderRadius: 3,
+            boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
+          },
         }}
       >
         <DialogTitle sx={{ fontWeight: 700, fontSize: "1.35rem", pb: 1 }}>
           {editingId ? "Edit Resource" : "Add New Resource"}
         </DialogTitle>
-        
+
         <DialogContent sx={{ display: "grid", gap: 2.5, mt: 1, pb: 3 }}>
-          <TextField 
-            label="Name" 
-            name="name" 
-            value={formData.name} 
-            onChange={handleChange} 
-            fullWidth 
+          <TextField
+            label="Name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            fullWidth
             size="small"
           />
-          <TextField 
-            select 
-            label="Type" 
-            name="type" 
-            value={formData.type} 
+          <TextField
+            select
+            label="Type"
+            name="type"
+            value={formData.type}
             onChange={handleChange}
             size="small"
           >
@@ -308,26 +331,26 @@ export default function ManageResourcesPage() {
             <MenuItem value="MEETING_ROOM">MEETING_ROOM</MenuItem>
             <MenuItem value="EQUIPMENT">EQUIPMENT</MenuItem>
           </TextField>
-          <TextField 
-            label="Capacity" 
-            name="capacity" 
-            type="number" 
-            value={formData.capacity} 
-            onChange={handleChange} 
+          <TextField
+            label="Capacity"
+            name="capacity"
+            type="number"
+            value={formData.capacity}
+            onChange={handleChange}
             size="small"
           />
-          <TextField 
-            label="Location" 
-            name="location" 
-            value={formData.location} 
-            onChange={handleChange} 
+          <TextField
+            label="Location"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
             size="small"
           />
-          <TextField 
-            select 
-            label="Status" 
-            name="status" 
-            value={formData.status} 
+          <TextField
+            select
+            label="Status"
+            name="status"
+            value={formData.status}
             onChange={handleChange}
             size="small"
           >
@@ -355,14 +378,11 @@ export default function ManageResourcesPage() {
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button 
-            onClick={handleClose}
-            sx={{ color: "#666666" }}
-          >
+          <Button onClick={handleClose} sx={{ color: "#666666" }}>
             Cancel
           </Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleSave}
             sx={{
               bgcolor: "#000000",

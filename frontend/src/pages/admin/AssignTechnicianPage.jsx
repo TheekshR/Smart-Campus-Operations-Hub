@@ -11,10 +11,10 @@ import {
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
-
-const ADMIN_NAME = "ADMIN001";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 export default function AssignTechnicianPage() {
+  const { currentUser, loading, error } = useCurrentUser();
   const [issues, setIssues] = useState([]);
   const [resourceMap, setResourceMap] = useState({});
   const [technicianInputs, setTechnicianInputs] = useState({});
@@ -27,10 +27,10 @@ export default function AssignTechnicianPage() {
         api.get("/api/resources"),
       ]);
 
-      setIssues(issuesRes.data);
+      setIssues(issuesRes.data || []);
 
       const map = {};
-      resourcesRes.data.forEach((resource) => {
+      (resourcesRes.data || []).forEach((resource) => {
         map[resource.id] = resource;
       });
       setResourceMap(map);
@@ -40,8 +40,10 @@ export default function AssignTechnicianPage() {
   };
 
   useEffect(() => {
-    fetchReportedIssues();
-  }, []);
+    if (currentUser) {
+      fetchReportedIssues();
+    }
+  }, [currentUser]);
 
   const handleTechnicianChange = (issueId, value) => {
     setTechnicianInputs((prev) => ({
@@ -62,7 +64,7 @@ export default function AssignTechnicianPage() {
       await api.put(`/api/issues/${issueId}/assign`, null, {
         params: {
           technicianId,
-          admin: ADMIN_NAME,
+          admin: currentUser?.name || "ADMIN",
         },
       });
 
@@ -70,9 +72,21 @@ export default function AssignTechnicianPage() {
       fetchReportedIssues();
     } catch (error) {
       console.error("Failed to assign technician:", error);
-      setMessage("Failed to assign technician.");
+      setMessage(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Failed to assign technician."
+      );
     }
   };
+
+  if (loading) {
+    return <Box sx={{ p: 3 }}>Loading...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ p: 3 }}>{error}</Box>;
+  }
 
   return (
     <Box>
@@ -82,7 +96,10 @@ export default function AssignTechnicianPage() {
       />
 
       {message && (
-        <Alert severity={message.includes("successfully") ? "success" : "error"} sx={{ mb: 2 }}>
+        <Alert
+          severity={message.includes("successfully") ? "success" : "error"}
+          sx={{ mb: 2 }}
+        >
           {message}
         </Alert>
       )}
@@ -114,7 +131,9 @@ export default function AssignTechnicianPage() {
                     fullWidth
                     label="Technician ID"
                     value={technicianInputs[issue.id] || ""}
-                    onChange={(e) => handleTechnicianChange(issue.id, e.target.value)}
+                    onChange={(e) =>
+                      handleTechnicianChange(issue.id, e.target.value)
+                    }
                     sx={{ mt: 2 }}
                   />
 

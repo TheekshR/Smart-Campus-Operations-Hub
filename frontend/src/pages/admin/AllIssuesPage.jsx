@@ -11,8 +11,10 @@ import {
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 export default function AllIssuesPage() {
+  const { currentUser, loading, error } = useCurrentUser();
   const [issues, setIssues] = useState([]);
   const [resourceMap, setResourceMap] = useState({});
   const [statusFilter, setStatusFilter] = useState("");
@@ -28,10 +30,10 @@ export default function AllIssuesPage() {
         api.get("/api/resources"),
       ]);
 
-      setIssues(issuesRes.data);
+      setIssues(issuesRes.data || []);
 
       const map = {};
-      resourcesRes.data.forEach((resource) => {
+      (resourcesRes.data || []).forEach((resource) => {
         map[resource.id] = resource;
       });
       setResourceMap(map);
@@ -41,8 +43,10 @@ export default function AllIssuesPage() {
   };
 
   useEffect(() => {
-    fetchIssues();
-  }, [statusFilter]);
+    if (currentUser) {
+      fetchIssues();
+    }
+  }, [currentUser, statusFilter]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -58,6 +62,14 @@ export default function AllIssuesPage() {
         return "default";
     }
   };
+
+  if (loading) {
+    return <Box sx={{ p: 3 }}>Loading...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ p: 3 }}>{error}</Box>;
+  }
 
   return (
     <Box>

@@ -15,10 +15,10 @@ import {
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
-const ADMIN_NAME = "ADMIN001";
-
-export default function BookingRequestsPage() {
+export default function AllBookingsPage() {
+  const { currentUser, loading, error } = useCurrentUser();
   const [bookings, setBookings] = useState([]);
   const [resourceMap, setResourceMap] = useState({});
   const [message, setMessage] = useState("");
@@ -33,10 +33,10 @@ export default function BookingRequestsPage() {
         api.get("/api/resources"),
       ]);
 
-      setBookings(bookingsRes.data);
+      setBookings(bookingsRes.data || []);
 
       const map = {};
-      resourcesRes.data.forEach((resource) => {
+      (resourcesRes.data || []).forEach((resource) => {
         map[resource.id] = resource;
       });
       setResourceMap(map);
@@ -46,19 +46,25 @@ export default function BookingRequestsPage() {
   };
 
   useEffect(() => {
-    fetchPendingBookings();
-  }, []);
+    if (currentUser) {
+      fetchPendingBookings();
+    }
+  }, [currentUser]);
 
   const handleApprove = async (bookingId) => {
     try {
       await api.put(`/api/bookings/${bookingId}/approve`, null, {
-        params: { admin: ADMIN_NAME },
+        params: { admin: currentUser?.name || "ADMIN" },
       });
       setMessage("Booking approved successfully.");
       fetchPendingBookings();
     } catch (error) {
       console.error("Failed to approve booking:", error);
-      setMessage("Failed to approve booking.");
+      setMessage(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Failed to approve booking."
+      );
     }
   };
 
@@ -79,7 +85,7 @@ export default function BookingRequestsPage() {
       await api.put(`/api/bookings/${selectedBookingId}/reject`, null, {
         params: {
           reason: rejectReason,
-          admin: ADMIN_NAME,
+          admin: currentUser?.name || "ADMIN",
         },
       });
       setMessage("Booking rejected successfully.");
@@ -87,9 +93,21 @@ export default function BookingRequestsPage() {
       fetchPendingBookings();
     } catch (error) {
       console.error("Failed to reject booking:", error);
-      setMessage("Failed to reject booking.");
+      setMessage(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Failed to reject booking."
+      );
     }
   };
+
+  if (loading) {
+    return <Box sx={{ p: 3 }}>Loading...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ p: 3 }}>{error}</Box>;
+  }
 
   return (
     <Box>
@@ -99,7 +117,10 @@ export default function BookingRequestsPage() {
       />
 
       {message && (
-        <Alert severity={message.includes("successfully") ? "success" : "error"} sx={{ mb: 2 }}>
+        <Alert
+          severity={message.includes("successfully") ? "success" : "error"}
+          sx={{ mb: 2 }}
+        >
           {message}
         </Alert>
       )}
@@ -154,7 +175,12 @@ export default function BookingRequestsPage() {
         })}
       </Grid>
 
-      <Dialog open={rejectDialogOpen} onClose={closeRejectDialog} fullWidth maxWidth="sm">
+      <Dialog
+        open={rejectDialogOpen}
+        onClose={closeRejectDialog}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle>Reject Booking</DialogTitle>
         <DialogContent sx={{ mt: 1 }}>
           <TextField

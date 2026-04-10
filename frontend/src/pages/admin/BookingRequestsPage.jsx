@@ -15,10 +15,10 @@ import {
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
-
-const ADMIN_NAME = "ADMIN001";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 export default function BookingRequestsPage() {
+  const { currentUser, loading, error } = useCurrentUser();
   const [bookings, setBookings] = useState([]);
   const [resourceMap, setResourceMap] = useState({});
   const [message, setMessage] = useState("");
@@ -33,31 +33,33 @@ export default function BookingRequestsPage() {
         api.get("/api/resources"),
       ]);
 
-      setBookings(bookingsRes.data);
+      setBookings(bookingsRes.data || []);
 
       const map = {};
-      resourcesRes.data.forEach((resource) => {
+      (resourcesRes.data || []).forEach((resource) => {
         map[resource.id] = resource;
       });
       setResourceMap(map);
-    } catch (error) {
-      console.error("Failed to fetch pending bookings:", error);
+    } catch (err) {
+      console.error("Failed to fetch pending bookings:", err);
     }
   };
 
   useEffect(() => {
-    fetchPendingBookings();
-  }, []);
+    if (currentUser) {
+      fetchPendingBookings();
+    }
+  }, [currentUser]);
 
   const handleApprove = async (bookingId) => {
     try {
       await api.put(`/api/bookings/${bookingId}/approve`, null, {
-        params: { admin: ADMIN_NAME },
+        params: { admin: currentUser?.name || "ADMIN" },
       });
       setMessage("Booking approved successfully.");
       fetchPendingBookings();
-    } catch (error) {
-      console.error("Failed to approve booking:", error);
+    } catch (err) {
+      console.error("Failed to approve booking:", err);
       setMessage("Failed to approve booking.");
     }
   };
@@ -79,17 +81,20 @@ export default function BookingRequestsPage() {
       await api.put(`/api/bookings/${selectedBookingId}/reject`, null, {
         params: {
           reason: rejectReason,
-          admin: ADMIN_NAME,
+          admin: currentUser?.name || "ADMIN",
         },
       });
       setMessage("Booking rejected successfully.");
       closeRejectDialog();
       fetchPendingBookings();
-    } catch (error) {
-      console.error("Failed to reject booking:", error);
+    } catch (err) {
+      console.error("Failed to reject booking:", err);
       setMessage("Failed to reject booking.");
     }
   };
+
+  if (loading) return <Box sx={{ p: 3 }}>Loading...</Box>;
+  if (error) return <Box sx={{ p: 3 }}>{error}</Box>;
 
   return (
     <Box sx={{ p: { xs: 3, md: 5 }, bgcolor: "#ffffff", minHeight: "100vh" }}>
@@ -99,8 +104,8 @@ export default function BookingRequestsPage() {
       />
 
       {message && (
-        <Alert 
-          severity={message.includes("successfully") ? "success" : "error"} 
+        <Alert
+          severity={message.includes("successfully") ? "success" : "error"}
           sx={{ mb: 4, borderRadius: 2 }}
         >
           {message}
@@ -113,24 +118,20 @@ export default function BookingRequestsPage() {
 
           return (
             <Grid item xs={12} md={6} lg={4} key={booking.id}>
-              <Card 
-                sx={{ 
-                  borderRadius: 3, 
+              <Card
+                sx={{
+                  borderRadius: 3,
                   boxShadow: "0 4px 20px rgba(0, 0, 0, 0.06)",
                   border: "1px solid #f0f0f0",
                   transition: "all 0.3s ease",
                   "&:hover": {
                     transform: "translateY(-6px)",
                     boxShadow: "0 12px 35px rgba(0, 0, 0, 0.12)",
-                  }
+                  },
                 }}
               >
                 <CardContent sx={{ p: 3.5 }}>
-                  <Typography 
-                    variant="h6" 
-                    fontWeight="700" 
-                    sx={{ color: "#000000", mb: 2.5 }}
-                  >
+                  <Typography variant="h6" fontWeight="700" sx={{ color: "#000000", mb: 2.5 }}>
                     Request #{booking.id?.slice(-6)}
                   </Typography>
 
@@ -187,9 +188,9 @@ export default function BookingRequestsPage() {
                         py: 1.3,
                         borderRadius: 2,
                         fontWeight: 600,
-                        "&:hover": { 
-                          bgcolor: "#fff5f5", 
-                          borderColor: "#d32f2f" 
+                        "&:hover": {
+                          bgcolor: "#fff5f5",
+                          borderColor: "#d32f2f",
                         },
                       }}
                     >
@@ -203,23 +204,22 @@ export default function BookingRequestsPage() {
         })}
       </Grid>
 
-      {/* Reject Dialog */}
-      <Dialog 
-        open={rejectDialogOpen} 
-        onClose={closeRejectDialog} 
-        fullWidth 
+      <Dialog
+        open={rejectDialogOpen}
+        onClose={closeRejectDialog}
+        fullWidth
         maxWidth="sm"
         PaperProps={{
-          sx: { 
-            borderRadius: 3, 
-            boxShadow: "0 10px 40px rgba(0,0,0,0.1)" 
-          }
+          sx: {
+            borderRadius: 3,
+            boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
+          },
         }}
       >
         <DialogTitle sx={{ fontWeight: 700, fontSize: "1.35rem" }}>
           Reject Booking Request
         </DialogTitle>
-        
+
         <DialogContent sx={{ mt: 1, pb: 3 }}>
           <TextField
             fullWidth
@@ -234,10 +234,7 @@ export default function BookingRequestsPage() {
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button 
-            onClick={closeRejectDialog}
-            sx={{ color: "#666666", fontWeight: 500 }}
-          >
+          <Button onClick={closeRejectDialog} sx={{ color: "#666666", fontWeight: 500 }}>
             Cancel
           </Button>
           <Button
