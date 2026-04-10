@@ -16,6 +16,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
-        response.sendRedirect("http://localhost:8081/api/users/me");
+        response.sendRedirect("http://localhost:3000/user/dashboard");
     }
 }
