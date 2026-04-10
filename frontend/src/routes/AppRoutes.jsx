@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import DashboardLayout from "../components/layout/DashboardLayout";
 
+import AuthPage from "../pages/AuthPage";
+
 import UserDashboard from "../pages/user/UserDashboard";
 import ViewResourcesPage from "../pages/user/ViewResourcesPage";
 import BookResourcePage from "../pages/user/BookResourcePage";
@@ -29,7 +31,8 @@ export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/user/dashboard" replace />} />
+        <Route path="/" element={<Navigate to="/auth" replace />} />
+        <Route path="/auth" element={<AuthPage />} />
 
         <Route element={<DashboardLayout role="user" />}>
           <Route path="/user/dashboard" element={<UserDashboard />} />

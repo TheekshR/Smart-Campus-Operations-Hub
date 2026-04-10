@@ -42,7 +42,7 @@ public class SecurityConfig {
                         .successHandler(successHandler)
                 )
                 .logout(logout -> logout
-                        .logoutSuccessUrl("/")
+                        .logoutSuccessUrl("http://localhost:3000/auth")
                         .permitAll()
                 );
 

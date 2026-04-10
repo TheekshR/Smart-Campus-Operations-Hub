@@ -96,6 +96,10 @@ export default function Topbar({ role = "user" }) {
     navigate(notificationRouteMap[role] || "/user/notifications");
   };
 
+  const handleLogout = () => {
+    window.location.href = "http://localhost:8081/logout";
+  };
+
   return (
     <AppBar
       position="static"
@@ -195,6 +199,14 @@ export default function Topbar({ role = "user" }) {
                 {currentUser.name} ({currentUser.role})
               </Typography>
               <Avatar src={currentUser.picture} alt={currentUser.name} />
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                onClick={handleLogout}
+              >
+                Logout
+              </Button>
             </Box>
           )}
         </Box>
