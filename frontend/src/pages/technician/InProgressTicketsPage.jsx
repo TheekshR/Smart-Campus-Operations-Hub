@@ -16,6 +16,7 @@ import {
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
+import IssueCommentsSection from "../../components/issues/IssueCommentsSection";
 
 export default function InProgressTicketsPage() {
   const { currentUser, loading, error } = useCurrentUser();
@@ -174,6 +175,7 @@ export default function InProgressTicketsPage() {
           </Button>
         </DialogActions>
       </Dialog>
+      
     </Box>
   );
 }

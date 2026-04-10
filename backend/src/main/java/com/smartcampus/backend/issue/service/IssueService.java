@@ -4,8 +4,8 @@ import com.smartcampus.backend.issue.model.Issue;
 import com.smartcampus.backend.issue.repository.IssueRepository;
 import com.smartcampus.backend.notification.model.NotificationType;
 import com.smartcampus.backend.notification.service.NotificationService;
-import com.smartcampus.backend.resource.enums.ResourceStatus;
 import com.smartcampus.backend.resource.model.Resource;
+import com.smartcampus.backend.resource.enums.ResourceStatus;
 import com.smartcampus.backend.resource.repository.ResourceRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,13 +19,16 @@ public class IssueService {
     private final IssueRepository repository;
     private final ResourceRepository resourceRepository;
     private final NotificationService notificationService;
+    private final IssueCommentService issueCommentService;
 
     public IssueService(IssueRepository repository,
                         ResourceRepository resourceRepository,
-                        NotificationService notificationService) {
+                        NotificationService notificationService,
+                        IssueCommentService issueCommentService) {
         this.repository = repository;
         this.resourceRepository = resourceRepository;
         this.notificationService = notificationService;
+        this.issueCommentService = issueCommentService;
     }
 
     public Issue createIssueWithImages(String resourceId,
@@ -187,6 +190,7 @@ public class IssueService {
             throw new RuntimeException("Issue not found");
         }
 
+        issueCommentService.deleteCommentsByIssueId(id);
         repository.deleteById(id);
     }
 }

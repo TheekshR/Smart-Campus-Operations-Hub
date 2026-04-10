@@ -10,6 +10,7 @@ import {
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
+import IssueCommentsSection from "../../components/issues/IssueCommentsSection";
 
 export default function MyTicketsPage() {
   const { currentUser, loading, error } = useCurrentUser();
@@ -114,7 +115,9 @@ export default function MyTicketsPage() {
                       </Typography>
                     ))}
                   </Box>
+                  
                 )}
+                <IssueCommentsSection issueId={issue.id} />
                 </CardContent>
               </Card>
             </Grid>
