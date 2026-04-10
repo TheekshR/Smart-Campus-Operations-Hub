@@ -129,6 +129,67 @@ export default function AdminDashboard() {
     return issues.filter((i) => i.status === "REPORTED").slice(0, 5);
   }, [issues]);
 
+  const insights = useMemo(() => {
+    const resourceMap = {};
+    resources.forEach((resource) => {
+      resourceMap[resource.id] = resource.name;
+    });
+
+    const bookingCounts = {};
+    bookings.forEach((booking) => {
+      bookingCounts[booking.resourceId] = (bookingCounts[booking.resourceId] || 0) + 1;
+    });
+
+    let mostBookedResourceId = null;
+    let maxBookings = 0;
+    Object.entries(bookingCounts).forEach(([resourceId, count]) => {
+      if (count > maxBookings) {
+        maxBookings = count;
+        mostBookedResourceId = resourceId;
+      }
+    });
+
+    const issueCounts = {};
+    issues.forEach((issue) => {
+      issueCounts[issue.resourceId] = (issueCounts[issue.resourceId] || 0) + 1;
+    });
+
+    let mostProblematicResourceId = null;
+    let maxIssues = 0;
+    Object.entries(issueCounts).forEach(([resourceId, count]) => {
+      if (count > maxIssues) {
+        maxIssues = count;
+        mostProblematicResourceId = resourceId;
+      }
+    });
+
+    const hourCounts = {};
+    bookings.forEach((booking) => {
+      const hour = (booking.startTime || "00:00").split(":")[0] + ":00";
+      hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+    });
+
+    let peakBookingHour = "No data";
+    let maxHourCount = 0;
+    Object.entries(hourCounts).forEach(([hour, count]) => {
+      if (count > maxHourCount) {
+        maxHourCount = count;
+        peakBookingHour = hour;
+      }
+    });
+
+    return {
+      mostBookedResource:
+        mostBookedResourceId ? resourceMap[mostBookedResourceId] || mostBookedResourceId : "No bookings",
+      mostProblematicResource:
+        mostProblematicResourceId
+          ? resourceMap[mostProblematicResourceId] || mostProblematicResourceId
+          : "No issues",
+      peakBookingHour,
+      totalOpenIssues: issues.filter((issue) => issue.status !== "FIXED").length,
+    };
+  }, [resources, bookings, issues]);
+
   if (loading) {
     return (
       <Box sx={{ p: 3, display: "flex", alignItems: "center", gap: 2 }}>
@@ -163,6 +224,40 @@ export default function AdminDashboard() {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard title="Out Of Service" value={outOfServiceCount} />
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12}>
+          <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
+            <CardContent>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                System Insights
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={3}>
+                  <Typography>
+                    Most booked resource: <strong>{insights.mostBookedResource}</strong>
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Typography>
+                    Peak booking hour: <strong>{insights.peakBookingHour}</strong>
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Typography>
+                    Most problematic resource: <strong>{insights.mostProblematicResource}</strong>
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Typography>
+                    Total open issues: <strong>{insights.totalOpenIssues}</strong>
+                  </Typography>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 

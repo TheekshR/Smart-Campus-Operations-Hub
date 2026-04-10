@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Box, Grid, Card, CardContent, Typography } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import StatCard from "../../components/common/StatCard";
@@ -10,21 +10,24 @@ export default function UserDashboard() {
   const [bookings, setBookings] = useState([]);
   const [issues, setIssues] = useState([]);
   const [unreadNotifications, setUnreadNotifications] = useState([]);
+  const [resources, setResources] = useState([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       if (!currentUser?.id) return;
 
       try {
-        const [bookingsRes, issuesRes, notificationsRes] = await Promise.all([
+        const [bookingsRes, issuesRes, notificationsRes, resourcesRes] = await Promise.all([
           api.get(`/api/bookings/user/${currentUser.id}`),
           api.get(`/api/issues/user/${currentUser.id}`),
           api.get("/api/notifications/me/unread"),
+          api.get("/api/resources"),
         ]);
 
-        setBookings(bookingsRes.data);
-        setIssues(issuesRes.data);
-        setUnreadNotifications(notificationsRes.data);
+        setBookings(bookingsRes.data || []);
+        setIssues(issuesRes.data || []);
+        setUnreadNotifications(notificationsRes.data || []);
+        setResources(resourcesRes.data || []);
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err);
       }
@@ -33,14 +36,6 @@ export default function UserDashboard() {
     fetchDashboardData();
   }, [currentUser]);
 
-  if (loading) {
-    return <Box sx={{ p: 3 }}>Loading...</Box>;
-  }
-
-  if (error) {
-    return <Box sx={{ p: 3 }}>{error}</Box>;
-  }
-
   const activeBookings = bookings.filter(
     (booking) => booking.status === "APPROVED" || booking.status === "PENDING"
   ).length;
@@ -48,6 +43,69 @@ export default function UserDashboard() {
   const openTickets = issues.filter(
     (issue) => issue.status !== "FIXED"
   ).length;
+
+  const resourceMap = useMemo(() => {
+    const map = {};
+    resources.forEach((resource) => {
+      map[resource.id] = resource.name;
+    });
+    return map;
+  }, [resources]);
+
+  const insights = useMemo(() => {
+    const totalBookings = bookings.length;
+
+    const resourceCounts = {};
+    bookings.forEach((booking) => {
+      resourceCounts[booking.resourceId] = (resourceCounts[booking.resourceId] || 0) + 1;
+    });
+
+    let mostUsedResourceId = null;
+    let maxResourceCount = 0;
+    Object.entries(resourceCounts).forEach(([resourceId, count]) => {
+      if (count > maxResourceCount) {
+        maxResourceCount = count;
+        mostUsedResourceId = resourceId;
+      }
+    });
+
+    const hourCounts = {
+      Morning: 0,
+      Afternoon: 0,
+      Evening: 0,
+    };
+
+    bookings.forEach((booking) => {
+      const hour = Number((booking.startTime || "00:00").split(":")[0]);
+      if (hour < 12) hourCounts.Morning += 1;
+      else if (hour < 17) hourCounts.Afternoon += 1;
+      else hourCounts.Evening += 1;
+    });
+
+    let preferredTime = "No history";
+    let maxTimeCount = 0;
+    Object.entries(hourCounts).forEach(([slot, count]) => {
+      if (count > maxTimeCount) {
+        maxTimeCount = count;
+        preferredTime = slot;
+      }
+    });
+
+    return {
+      totalBookings,
+      mostUsedResource:
+        mostUsedResourceId ? resourceMap[mostUsedResourceId] || mostUsedResourceId : "No bookings yet",
+      preferredTime,
+    };
+  }, [bookings, resourceMap]);
+
+  if (loading) {
+    return <Box sx={{ p: 3 }}>Loading...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ p: 3 }}>{error}</Box>;
+  }
 
   return (
     <Box>
@@ -68,17 +126,29 @@ export default function UserDashboard() {
         </Grid>
       </Grid>
 
-      <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-        <CardContent>
-          <Typography variant="h6" fontWeight="bold" gutterBottom>
-            Welcome, {currentUser?.name}
-          </Typography>
-          <Typography color="text.secondary">
-            Use the left menu to browse resources, submit booking requests,
-            track your bookings, manage tickets, and view notifications.
-          </Typography>
-        </CardContent>
-      </Card>
+      <Grid container spacing={3}>
+        
+
+        <Grid item xs={12} lg={5}>
+          <Card sx={{ borderRadius: 3, boxShadow: 2, height: "100%" }}>
+            <CardContent>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                My Insights
+              </Typography>
+              <Typography sx={{ mb: 1 }}>
+                Total bookings: <strong>{insights.totalBookings}</strong>
+              </Typography>
+              <Typography sx={{ mb: 1 }}>
+                Most used resource: <strong>{insights.mostUsedResource}</strong>
+              </Typography>
+              
+              <Typography>
+                Preferred booking time: <strong>{insights.preferredTime}</strong>
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
     </Box>
   );
 }
