@@ -32,6 +32,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/bookings/**").authenticated()
                         .requestMatchers("/api/issues/**").authenticated()
                         .requestMatchers("/api/notifications/**").authenticated()
+                        .requestMatchers("/api/chatbot/**").authenticated()
                         .requestMatchers("/api/debug/auth").authenticated()
                         .anyRequest().authenticated()
                 )
