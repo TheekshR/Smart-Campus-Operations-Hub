@@ -2,13 +2,15 @@ package com.smartcampus.backend.issue.service;
 
 import com.smartcampus.backend.issue.model.Issue;
 import com.smartcampus.backend.issue.repository.IssueRepository;
+import com.smartcampus.backend.notification.model.NotificationType;
+import com.smartcampus.backend.notification.service.NotificationService;
+import com.smartcampus.backend.resource.enums.ResourceStatus;
 import com.smartcampus.backend.resource.model.Resource;
 import com.smartcampus.backend.resource.repository.ResourceRepository;
 import org.springframework.stereotype.Service;
-import com.smartcampus.backend.resource.enums.ResourceStatus;
-import com.smartcampus.backend.notification.model.NotificationType;
-import com.smartcampus.backend.notification.service.NotificationService;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -19,24 +21,48 @@ public class IssueService {
     private final NotificationService notificationService;
 
     public IssueService(IssueRepository repository,
-        ResourceRepository resourceRepository,
-        NotificationService notificationService) {
+                        ResourceRepository resourceRepository,
+                        NotificationService notificationService) {
         this.repository = repository;
         this.resourceRepository = resourceRepository;
         this.notificationService = notificationService;
-        }
+    }
 
-    public Issue createIssue(Issue issue) {
-        Resource resource = resourceRepository.findById(issue.getResourceId()).orElse(null);
+    public Issue createIssueWithImages(String resourceId,
+                                       String userId,
+                                       String description,
+                                       String priority,
+                                       List<MultipartFile> images) {
+
+        Resource resource = resourceRepository.findById(resourceId).orElse(null);
 
         if (resource == null) {
             throw new RuntimeException("Resource not found");
         }
 
+        if (images != null && images.size() > 3) {
+            throw new RuntimeException("You can upload up to 3 images only");
+        }
+
+        Issue issue = new Issue();
+        issue.setResourceId(resourceId);
+        issue.setUserId(userId);
+        issue.setDescription(description);
+        issue.setPriority(priority);
         issue.setStatus("REPORTED");
         issue.setTechnicianId(null);
         issue.setResolutionNote(null);
         issue.setAssignedBy(null);
+
+        List<String> imageUrls = new ArrayList<>();
+        if (images != null) {
+            for (MultipartFile image : images) {
+                if (!image.isEmpty()) {
+                    imageUrls.add(image.getOriginalFilename());
+                }
+            }
+        }
+        issue.setImageUrls(imageUrls);
 
         Issue savedIssue = repository.save(issue);
 
@@ -74,17 +100,17 @@ public class IssueService {
 
     public Issue assignTechnician(String id, String technicianId, String admin) {
         Issue issue = repository.findById(id).orElse(null);
-    
+
         if (issue == null) {
             throw new RuntimeException("Issue not found");
         }
-    
+
         issue.setTechnicianId(technicianId);
         issue.setAssignedBy(admin);
         issue.setStatus("ASSIGNED");
-    
+
         Issue savedIssue = repository.save(issue);
-    
+
         notificationService.createNotificationForUser(
                 savedIssue.getUserId(),
                 NotificationType.ISSUE_STATUS_CHANGED,
@@ -92,24 +118,24 @@ public class IssueService {
                 "Your issue has been assigned to a technician.",
                 savedIssue.getId()
         );
-    
+
         return savedIssue;
     }
 
     public Issue startProgress(String id, String technicianId) {
         Issue issue = repository.findById(id).orElse(null);
-    
+
         if (issue == null) {
             throw new RuntimeException("Issue not found");
         }
-    
+
         if (issue.getTechnicianId() == null || !issue.getTechnicianId().equals(technicianId)) {
             throw new RuntimeException("Only the assigned technician can start this issue");
         }
-    
+
         issue.setStatus("IN_PROGRESS");
         Issue savedIssue = repository.save(issue);
-    
+
         notificationService.createNotificationForUser(
                 savedIssue.getUserId(),
                 NotificationType.ISSUE_STATUS_CHANGED,
@@ -117,32 +143,32 @@ public class IssueService {
                 "Your reported issue is now in progress.",
                 savedIssue.getId()
         );
-    
+
         return savedIssue;
     }
 
     public Issue resolveIssue(String id, String technicianId, String resolutionNote) {
         Issue issue = repository.findById(id).orElse(null);
-    
+
         if (issue == null) {
             throw new RuntimeException("Issue not found");
         }
-    
+
         if (issue.getTechnicianId() == null || !issue.getTechnicianId().equals(technicianId)) {
             throw new RuntimeException("Only the assigned technician can resolve this issue");
         }
-    
+
         issue.setStatus("FIXED");
         issue.setResolutionNote(resolutionNote);
-    
+
         Issue savedIssue = repository.save(issue);
-    
+
         Resource resource = resourceRepository.findById(issue.getResourceId()).orElse(null);
         if (resource != null) {
             resource.setStatus(ResourceStatus.ACTIVE);
             resourceRepository.save(resource);
         }
-    
+
         notificationService.createNotificationForUser(
                 savedIssue.getUserId(),
                 NotificationType.ISSUE_STATUS_CHANGED,
@@ -150,11 +176,9 @@ public class IssueService {
                 "Your reported issue has been resolved.",
                 savedIssue.getId()
         );
-    
+
         return savedIssue;
     }
-
-    
 
     public void deleteIssue(String id) {
         Issue issue = repository.findById(id).orElse(null);

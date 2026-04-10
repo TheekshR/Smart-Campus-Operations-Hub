@@ -105,6 +105,16 @@ export default function MyTicketsPage() {
                   <Typography>
                     Resolution Note: {issue.resolutionNote || "-"}
                   </Typography>
+                  {issue.imageUrls && issue.imageUrls.length > 0 && (
+                  <Box sx={{ mt: 1 }}>
+                    <Typography fontWeight="bold">Images:</Typography>
+                    {issue.imageUrls.map((img, index) => (
+                      <Typography key={index} variant="body2">
+                        {img}
+                      </Typography>
+                    ))}
+                  </Box>
+                )}
                 </CardContent>
               </Card>
             </Grid>

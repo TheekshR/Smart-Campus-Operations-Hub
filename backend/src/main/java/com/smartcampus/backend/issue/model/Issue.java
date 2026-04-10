@@ -5,6 +5,8 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.List;
+
 @Data
 @Document(collection = "issues")
 public class Issue {
@@ -29,4 +31,7 @@ public class Issue {
     private String technicianId;
     private String resolutionNote;
     private String assignedBy;
+
+    // store uploaded image file names or paths
+    private List<String> imageUrls;
 }

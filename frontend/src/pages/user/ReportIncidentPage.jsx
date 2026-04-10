@@ -7,6 +7,7 @@ import {
   Button,
   MenuItem,
   Alert,
+  Typography,
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
@@ -20,6 +21,7 @@ export default function ReportIncidentPage() {
     description: "",
     priority: "",
   });
+  const [selectedImages, setSelectedImages] = useState([]);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -43,14 +45,37 @@ export default function ReportIncidentPage() {
     }));
   };
 
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files || []);
+
+    if (files.length > 3) {
+      setMessage("You can upload up to 3 images only.");
+      return;
+    }
+
+    setMessage("");
+    setSelectedImages(files);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
 
     try {
-      await api.post("/api/issues", {
-        ...formData,
-        userId: currentUser.id,
+      const form = new FormData();
+      form.append("resourceId", formData.resourceId);
+      form.append("userId", currentUser.id);
+      form.append("description", formData.description);
+      form.append("priority", formData.priority);
+
+      selectedImages.forEach((file) => {
+        form.append("images", file);
+      });
+
+      await api.post("/api/issues", form, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       setMessage("Issue reported successfully.");
@@ -59,6 +84,7 @@ export default function ReportIncidentPage() {
         description: "",
         priority: "",
       });
+      setSelectedImages([]);
     } catch (err) {
       console.error("Issue creation failed:", err);
       const errorMessage =
@@ -134,6 +160,30 @@ export default function ReportIncidentPage() {
               <MenuItem value="MEDIUM">MEDIUM</MenuItem>
               <MenuItem value="HIGH">HIGH</MenuItem>
             </TextField>
+
+            <Button variant="outlined" component="label">
+              Upload Up To 3 Images
+              <input
+                type="file"
+                hidden
+                multiple
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+            </Button>
+
+            {selectedImages.length > 0 && (
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Selected Images:
+                </Typography>
+                {selectedImages.map((file, index) => (
+                  <Typography key={index} variant="body2">
+                    {file.name}
+                  </Typography>
+                ))}
+              </Box>
+            )}
 
             <Button type="submit" variant="contained" sx={{ width: "fit-content" }}>
               Submit Issue

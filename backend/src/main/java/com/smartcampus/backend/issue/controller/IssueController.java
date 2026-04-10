@@ -2,9 +2,9 @@ package com.smartcampus.backend.issue.controller;
 
 import com.smartcampus.backend.issue.model.Issue;
 import com.smartcampus.backend.issue.service.IssueService;
-import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -20,9 +20,15 @@ public class IssueController {
     }
 
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    @PostMapping
-    public Issue create(@Valid @RequestBody Issue issue) {
-        return service.createIssue(issue);
+    @PostMapping(consumes = {"multipart/form-data"})
+    public Issue create(
+            @RequestParam String resourceId,
+            @RequestParam String userId,
+            @RequestParam String description,
+            @RequestParam String priority,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images
+    ) {
+        return service.createIssueWithImages(resourceId, userId, description, priority, images);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
