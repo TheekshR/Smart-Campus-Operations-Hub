@@ -13,6 +13,7 @@ import UserNotificationsPage from "../pages/user/UserNotificationsPage";
 
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import ManageResourcesPage from "../pages/admin/ManageResourcesPage";
+import ManageUsers from "../pages/admin/ManageUsers";
 import BookingRequestsPage from "../pages/admin/BookingRequestsPage";
 import AllBookingsPage from "../pages/admin/AllBookingsPage";
 import AllIssuesPage from "../pages/admin/AllIssuesPage";
@@ -47,6 +48,7 @@ export default function AppRoutes() {
         <Route element={<DashboardLayout role="admin" />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/resources" element={<ManageResourcesPage />} />
+          <Route path="/admin/manage-users" element={<ManageUsers />} />
           <Route path="/admin/booking-requests" element={<BookingRequestsPage />} />
           <Route path="/admin/all-bookings" element={<AllBookingsPage />} />
           <Route path="/admin/all-issues" element={<AllIssuesPage />} />
