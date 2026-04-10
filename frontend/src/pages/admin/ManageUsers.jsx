@@ -18,8 +18,11 @@ import {
 } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 export default function ManageUsers() {
+  const { currentUser } = useCurrentUser();
+
   const [users, setUsers] = useState([]);
   const [roleFilter, setRoleFilter] = useState("");
   const [message, setMessage] = useState("");
@@ -43,9 +46,9 @@ export default function ManageUsers() {
     fetchUsers();
   }, [roleFilter]);
 
-  const handleRoleChange = async (userId, newRole) => {
+  const handleRoleChange = async (user, newRole) => {
     try {
-      await api.put(`/api/users/${userId}/role`, null, {
+      await api.put(`/api/users/${user.id}/role`, null, {
         params: { role: newRole },
       });
 
@@ -98,7 +101,7 @@ export default function ManageUsers() {
     <Box>
       <PageHeader
         title="Manage Users"
-        subtitle="View users, filter by role, update roles, and remove accounts."
+        subtitle="View users, update roles, and manage accounts securely."
       />
 
       {message && (
@@ -126,65 +129,87 @@ export default function ManageUsers() {
       </Box>
 
       <Grid container spacing={3}>
-        {users.map((user) => (
-          <Grid item xs={12} md={6} lg={4} key={user.id}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: "100%" }}>
-              <CardContent>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-                  <Avatar src={user.picture} alt={user.name} sx={{ width: 56, height: 56 }} />
-                  <Box>
-                    <Typography variant="h6" fontWeight="bold">
-                      {user.name || "Unnamed User"}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {user.email}
-                    </Typography>
+        {users.map((user) => {
+          const isSelf = currentUser?.id === user.id;
+          const isAdmin = user.role === "ADMIN";
+
+          return (
+            <Grid item xs={12} md={6} lg={4} key={user.id}>
+              <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
+                <CardContent>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+                    <Avatar src={user.picture} alt={user.name} />
+                    <Box>
+                      <Typography fontWeight="bold">
+                        {user.name || "Unnamed User"}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {user.email}
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
 
-                <Box sx={{ mb: 1.5 }}>
-                  <Chip label={user.role} color={getRoleColor(user.role)} />
-                </Box>
+                  <Chip
+                    label={user.role}
+                    color={getRoleColor(user.role)}
+                    sx={{ mb: 2 }}
+                  />
 
-                <Typography variant="body2" sx={{ mb: 0.5 }}>
-                  <strong>Phone:</strong> {user.phone || "-"}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 0.5 }}>
-                  <strong>Department:</strong> {user.department || "-"}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1.5 }}>
-                  <strong>Bio:</strong> {user.bio || "-"}
-                </Typography>
+                  <Typography variant="body2">
+                    <strong>Phone:</strong> {user.phone || "-"}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Department:</strong> {user.department || "-"}
+                  </Typography>
 
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  label="Change Role"
-                  value={user.role || ""}
-                  onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                  sx={{ mb: 2 }}
-                >
-                  <MenuItem value="USER">USER</MenuItem>
-                  <MenuItem value="ADMIN">ADMIN</MenuItem>
-                  <MenuItem value="TECHNICIAN">TECHNICIAN</MenuItem>
-                </TextField>
+                  {/* ROLE CHANGE */}
+                  <TextField
+                    select
+                    fullWidth
+                    size="small"
+                    label="Change Role"
+                    value={user.role}
+                    onChange={(e) => handleRoleChange(user, e.target.value)}
+                    sx={{ mt: 2 }}
+                    disabled={isAdmin || isSelf} // 🚫 restriction
+                  >
+                    <MenuItem value="USER">USER</MenuItem>
+                    <MenuItem value="ADMIN">ADMIN</MenuItem>
+                    <MenuItem value="TECHNICIAN">TECHNICIAN</MenuItem>
+                  </TextField>
 
-                <Button
-                  variant="outlined"
-                  color="error"
-                  fullWidth
-                  onClick={() => openDeleteDialog(user)}
-                >
-                  Delete User
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+                  {/* DELETE BUTTON */}
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    fullWidth
+                    sx={{ mt: 2 }}
+                    onClick={() => openDeleteDialog(user)}
+                    disabled={isAdmin || isSelf} // 🚫 restriction
+                  >
+                    Delete User
+                  </Button>
+
+                  {/* INFO TEXT */}
+                  {(isAdmin || isSelf) && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: "block", mt: 1 }}
+                    >
+                      {isSelf
+                        ? "You cannot modify your own account."
+                        : "Admin accounts cannot be modified."}
+                    </Typography>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
       </Grid>
 
-      <Dialog open={deleteDialogOpen} onClose={closeDeleteDialog} fullWidth maxWidth="xs">
+      <Dialog open={deleteDialogOpen} onClose={closeDeleteDialog}>
         <DialogTitle>Delete User</DialogTitle>
         <DialogContent>
           <Typography>
