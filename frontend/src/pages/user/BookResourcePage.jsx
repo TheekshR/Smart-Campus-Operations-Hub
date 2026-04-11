@@ -100,7 +100,7 @@ export default function BookResourcePage() {
       setMessage(errorMessage);
     }
   };
-
+  // Display loading or error states if user data is still being fetched
   if (loading) {
     return <Box sx={{ p: 3 }}>Loading...</Box>;
   }
