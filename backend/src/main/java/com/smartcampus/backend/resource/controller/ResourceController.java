@@ -1,10 +1,14 @@
 package com.smartcampus.backend.resource.controller;
 
+import com.smartcampus.backend.resource.dto.ResourceSummaryDTO;
 import com.smartcampus.backend.resource.model.Resource;
 import com.smartcampus.backend.resource.service.ResourceService;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Base64;
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:3000")
@@ -42,18 +46,34 @@ public class ResourceController {
     }
 
     @GetMapping
-    public List<Resource> getAll(
+    public List<ResourceSummaryDTO> getAll(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Integer minCapacity
     ) {
-        return service.getFilteredResources(type, location, status, minCapacity);
+        return service.getFilteredResources(type, location, status, minCapacity)
+                .stream()
+                .map(ResourceSummaryDTO::from)
+                .toList();
     }
 
     @GetMapping("/{id}")
     public Resource getById(@PathVariable String id) {
         return service.getResourceById(id);
+    }
+
+    @GetMapping("/{id}/image")
+    public ResponseEntity<byte[]> getImage(@PathVariable String id) {
+        Resource resource = service.getResourceById(id);
+        if (resource == null || resource.getImageBase64() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        byte[] imageBytes = Base64.getDecoder().decode(resource.getImageBase64());
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(resource.getImageType()))
+                .header("Cache-Control", "public, max-age=86400")
+                .body(imageBytes);
     }
 
     @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})

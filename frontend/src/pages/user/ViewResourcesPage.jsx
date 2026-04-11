@@ -67,11 +67,12 @@ export default function ViewResourcesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {resources.map((resource) => (
           <Card key={resource.id} className="overflow-hidden">
-            {resource.imageBase64 && resource.imageType && (
+            {resource.hasImage && (
               <img
-                src={`data:${resource.imageType};base64,${resource.imageBase64}`}
+                src={`http://localhost:8081/api/resources/${resource.id}/image`}
                 alt={resource.name}
                 className="w-full h-44 object-cover block"
+                loading="lazy"
               />
             )}
             <CardContent className="pt-4">
