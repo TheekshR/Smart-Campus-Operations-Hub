@@ -23,7 +23,7 @@ public class ResourceController {
     }
 
     @PostMapping(consumes = {"multipart/form-data"})
-    public Resource create(
+    public ResourceSummaryDTO create(
             @RequestParam String name,
             @RequestParam String type,
             @RequestParam int capacity,
@@ -33,7 +33,7 @@ public class ResourceController {
             @RequestParam(required = false) String availabilityEnd,
             @RequestParam(value = "image", required = false) MultipartFile image
     ) {
-        return service.createResourceWithImage(
+        Resource created = service.createResourceWithImage(
                 name,
                 type,
                 capacity,
@@ -43,6 +43,7 @@ public class ResourceController {
                 availabilityEnd,
                 image
         );
+        return ResourceSummaryDTO.from(created);
     }
 
     @GetMapping
@@ -77,7 +78,7 @@ public class ResourceController {
     }
 
     @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
-    public Resource update(
+    public ResourceSummaryDTO update(
             @PathVariable String id,
             @RequestParam String name,
             @RequestParam String type,
@@ -88,7 +89,7 @@ public class ResourceController {
             @RequestParam(required = false) String availabilityEnd,
             @RequestParam(value = "image", required = false) MultipartFile image
     ) {
-        return service.updateResourceWithImage(
+        Resource updated = service.updateResourceWithImage(
                 id,
                 name,
                 type,
@@ -99,6 +100,7 @@ public class ResourceController {
                 availabilityEnd,
                 image
         );
+        return ResourceSummaryDTO.from(updated);
     }
 
     @DeleteMapping("/{id}")

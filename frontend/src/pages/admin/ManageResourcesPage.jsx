@@ -18,39 +18,72 @@ export default function ManageResourcesPage() {
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [formData, setFormData] = useState(initialForm);
+  const [formErrors, setFormErrors] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const fetchResources = async () => {
     try {
-      const response = await api.get("/api/resources");
-      let data = response.data || [];
-      if (typeFilter) data = data.filter((r) => r.type === typeFilter);
-      if (statusFilter) data = data.filter((r) => r.status === statusFilter);
-      setResources(data);
+      const params = {};
+      if (typeFilter) params.type = typeFilter;
+      if (statusFilter) params.status = statusFilter;
+      const response = await api.get("/api/resources", { params });
+      setResources(response.data || []);
     } catch (error) { console.error("Failed to fetch resources:", error); }
   };
 
   useEffect(() => { if (currentUser) fetchResources(); }, [currentUser, typeFilter, statusFilter]);
 
-  const handleOpenCreate = () => { setEditingId(null); setFormData(initialForm); setSelectedImage(null); setOpen(true); };
+  const handleOpenCreate = () => { setEditingId(null); setFormData(initialForm); setSelectedImage(null); setFormErrors({}); setOpen(true); };
   const handleOpenEdit = (resource) => {
     setEditingId(resource.id);
-    setFormData({ name: resource.name || "", type: resource.type || "", capacity: resource.capacity || "", location: resource.location || "", status: resource.status || "ACTIVE", availabilityStart: resource.availabilityStart || "", availabilityEnd: resource.availabilityEnd || "" });
-    setSelectedImage(null); setOpen(true);
+    setFormData({
+      name: resource.name || "",
+      type: resource.type || "",
+      capacity: String(resource.capacity || ""),
+      location: resource.location || "",
+      status: resource.status || "ACTIVE",
+      availabilityStart: resource.availabilityStart || "",
+      availabilityEnd: resource.availabilityEnd || "",
+    });
+    setSelectedImage(null); setFormErrors({}); setOpen(true);
   };
-  const handleClose = () => { setOpen(false); setFormData(initialForm); setSelectedImage(null); setEditingId(null); };
-  const handleChange = (e) => { const { name, value } = e.target; setFormData((prev) => ({ ...prev, [name]: value })); };
+  const handleClose = () => { setOpen(false); setFormData(initialForm); setSelectedImage(null); setEditingId(null); setFormErrors({}); };
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormErrors((prev) => ({ ...prev, [name]: "" }));
+  };
   const handleImageChange = (e) => { setSelectedImage(e.target.files?.[0] || null); };
 
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.name.trim()) errors.name = "Name is required.";
+    if (!formData.type) errors.type = "Type is required.";
+    if (!formData.capacity || Number(formData.capacity) < 1) errors.capacity = "Capacity must be at least 1.";
+    if (!formData.location.trim()) errors.location = "Location is required.";
+    if (!formData.status) errors.status = "Status is required.";
+    if (formData.availabilityStart && formData.availabilityEnd && formData.availabilityStart >= formData.availabilityEnd) {
+      errors.availabilityEnd = "End time must be after start time.";
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSave = async () => {
+    if (!validateForm()) return;
+    setSaving(true);
     try {
       const form = new FormData();
-      form.append("name", formData.name); form.append("type", formData.type);
-      form.append("capacity", Number(formData.capacity)); form.append("location", formData.location);
-      form.append("status", formData.status); form.append("availabilityStart", formData.availabilityStart || "");
+      form.append("name", formData.name.trim());
+      form.append("type", formData.type);
+      form.append("capacity", Number(formData.capacity));
+      form.append("location", formData.location.trim());
+      form.append("status", formData.status);
+      form.append("availabilityStart", formData.availabilityStart || "");
       form.append("availabilityEnd", formData.availabilityEnd || "");
       if (selectedImage) form.append("image", selectedImage);
       if (editingId) {
@@ -64,6 +97,8 @@ export default function ManageResourcesPage() {
     } catch (error) {
       console.error("Failed to save resource:", error);
       setMessage(error.response?.data?.error || error.response?.data?.message || "Failed to save resource.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -125,19 +160,58 @@ export default function ManageResourcesPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>{editingId ? "Edit Resource" : "Add New Resource"}</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
-            <div className="space-y-1"><Label>Name</Label><Input name="name" value={formData.name} onChange={handleChange} /></div>
-            <div className="space-y-1"><Label>Type</Label><Select name="type" value={formData.type} onChange={handleChange}><option value="">Select...</option><option value="LAB">LAB</option><option value="LECTURE_HALL">LECTURE_HALL</option><option value="MEETING_ROOM">MEETING_ROOM</option><option value="EQUIPMENT">EQUIPMENT</option></Select></div>
-            <div className="space-y-1"><Label>Capacity</Label><Input type="number" name="capacity" value={formData.capacity} onChange={handleChange} /></div>
-            <div className="space-y-1"><Label>Location</Label><Input name="location" value={formData.location} onChange={handleChange} /></div>
-            <div className="space-y-1"><Label>Status</Label><Select name="status" value={formData.status} onChange={handleChange}><option value="ACTIVE">ACTIVE</option><option value="OUT_OF_SERVICE">OUT_OF_SERVICE</option></Select></div>
-            <div className="space-y-1"><Label>Availability Start</Label><Input type="time" name="availabilityStart" value={formData.availabilityStart} onChange={handleChange} /></div>
-            <div className="space-y-1"><Label>Availability End</Label><Input type="time" name="availabilityEnd" value={formData.availabilityEnd} onChange={handleChange} /></div>
-            <div className="space-y-1"><Label>{selectedImage ? "Change Image" : "Upload Image"}</Label><Input type="file" accept="image/*" onChange={handleImageChange} /></div>
+            <div className="space-y-1">
+              <Label>Name</Label>
+              <Input name="name" value={formData.name} onChange={handleChange} />
+              {formErrors.name && <p className="text-sm text-destructive">{formErrors.name}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Type</Label>
+              <Select name="type" value={formData.type} onChange={handleChange}>
+                <option value="">Select...</option>
+                <option value="LAB">LAB</option>
+                <option value="LECTURE_HALL">LECTURE_HALL</option>
+                <option value="MEETING_ROOM">MEETING_ROOM</option>
+                <option value="EQUIPMENT">EQUIPMENT</option>
+              </Select>
+              {formErrors.type && <p className="text-sm text-destructive">{formErrors.type}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Capacity</Label>
+              <Input type="number" min="1" name="capacity" value={formData.capacity} onChange={handleChange} />
+              {formErrors.capacity && <p className="text-sm text-destructive">{formErrors.capacity}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Location</Label>
+              <Input name="location" value={formData.location} onChange={handleChange} />
+              {formErrors.location && <p className="text-sm text-destructive">{formErrors.location}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Status</Label>
+              <Select name="status" value={formData.status} onChange={handleChange}>
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="OUT_OF_SERVICE">OUT_OF_SERVICE</option>
+              </Select>
+              {formErrors.status && <p className="text-sm text-destructive">{formErrors.status}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Availability Start</Label>
+              <Input type="time" name="availabilityStart" value={formData.availabilityStart} onChange={handleChange} />
+            </div>
+            <div className="space-y-1">
+              <Label>Availability End</Label>
+              <Input type="time" name="availabilityEnd" value={formData.availabilityEnd} onChange={handleChange} />
+              {formErrors.availabilityEnd && <p className="text-sm text-destructive">{formErrors.availabilityEnd}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>{selectedImage ? "Change Image" : "Upload Image"}</Label>
+              <Input type="file" accept="image/*" onChange={handleImageChange} />
+            </div>
             {selectedImage && <p className="text-sm text-muted-foreground">Selected: {selectedImage.name}</p>}
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={handleClose}>Cancel</Button>
-            <Button onClick={handleSave}>Save Resource</Button>
+            <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save Resource"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
