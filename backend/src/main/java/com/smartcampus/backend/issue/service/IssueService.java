@@ -86,7 +86,7 @@ public class IssueService {
 
         Issue savedIssue = repository.save(issue);
 
-        Resource resource = resourceRepository.findById(resourceId).orElse(null);
+        Resource resource = findResourceWithoutImages(resourceId);
         if (resource != null) {
             resource.setStatus(ResourceStatus.OUT_OF_SERVICE);
             resourceRepository.save(resource);
@@ -101,6 +101,18 @@ public class IssueService {
         return query;
     }
 
+    private Issue findIssueWithoutImages(String id) {
+        Query query = excludeImages();
+        query.addCriteria(Criteria.where("id").is(id));
+        return mongoTemplate.findOne(query, Issue.class);
+    }
+
+    private Resource findResourceWithoutImages(String id) {
+        Query query = new Query(Criteria.where("id").is(id));
+        query.fields().exclude("imageBase64").exclude("imageType");
+        return mongoTemplate.findOne(query, Resource.class);
+    }
+
     public List<IssueSummaryDTO> getAllIssues() {
         return mongoTemplate.find(excludeImages(), Issue.class).stream()
                 .map(IssueSummaryDTO::from)
@@ -108,7 +120,7 @@ public class IssueService {
     }
 
     public Issue getIssueById(String id) {
-        Issue issue = repository.findById(id).orElse(null);
+        Issue issue = findIssueWithoutImages(id);
 
         if (issue == null) {
             throw new RuntimeException("Issue not found");
@@ -146,8 +158,8 @@ public class IssueService {
     }
 
     public Issue assignTechnician(String id, String technicianId, String admin) {
-        Issue issue = repository.findById(id).orElse(null);
-    
+        Issue issue = findIssueWithoutImages(id);
+
         if (issue == null) {
             throw new RuntimeException("Issue not found");
         }
@@ -182,7 +194,7 @@ public class IssueService {
     }
 
     public Issue startProgress(String id, String technicianId) {
-        Issue issue = repository.findById(id).orElse(null);
+        Issue issue = findIssueWithoutImages(id);
 
         if (issue == null) {
             throw new RuntimeException("Issue not found");
@@ -207,7 +219,7 @@ public class IssueService {
     }
 
     public Issue resolveIssue(String id, String technicianId, String resolutionNote) {
-        Issue issue = repository.findById(id).orElse(null);
+        Issue issue = findIssueWithoutImages(id);
 
         if (issue == null) {
             throw new RuntimeException("Issue not found");
@@ -222,7 +234,7 @@ public class IssueService {
 
         Issue savedIssue = repository.save(issue);
 
-        Resource resource = resourceRepository.findById(issue.getResourceId()).orElse(null);
+        Resource resource = findResourceWithoutImages(issue.getResourceId());
         if (resource != null) {
             resource.setStatus(ResourceStatus.ACTIVE);
             resourceRepository.save(resource);
@@ -240,9 +252,7 @@ public class IssueService {
     }
 
     public void deleteIssue(String id) {
-        Issue issue = repository.findById(id).orElse(null);
-
-        if (issue == null) {
+        if (!repository.existsById(id)) {
             throw new RuntimeException("Issue not found");
         }
 

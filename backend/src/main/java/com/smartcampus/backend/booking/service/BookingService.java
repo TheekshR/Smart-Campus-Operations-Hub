@@ -7,7 +7,9 @@ import com.smartcampus.backend.notification.model.NotificationType;
 import com.smartcampus.backend.notification.service.NotificationService;
 import com.smartcampus.backend.resource.enums.ResourceStatus;
 import com.smartcampus.backend.resource.model.Resource;
-import com.smartcampus.backend.resource.repository.ResourceRepository;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
@@ -17,20 +19,26 @@ import java.util.List;
 public class BookingService {
 
     private final BookingRepository repository;
-    private final ResourceRepository resourceRepository;
     private final NotificationService notificationService;
+    private final MongoTemplate mongoTemplate;
 
     public BookingService(BookingRepository repository,
-                          ResourceRepository resourceRepository,
-                          NotificationService notificationService) {
+                          NotificationService notificationService,
+                          MongoTemplate mongoTemplate) {
         this.repository = repository;
-        this.resourceRepository = resourceRepository;
         this.notificationService = notificationService;
+        this.mongoTemplate = mongoTemplate;
+    }
+
+    private Resource findResourceWithoutImages(String id) {
+        Query query = new Query(Criteria.where("id").is(id));
+        query.fields().exclude("imageBase64").exclude("imageType");
+        return mongoTemplate.findOne(query, Resource.class);
     }
 
     public Booking createBooking(Booking booking) {
 
-        Resource resource = resourceRepository.findById(booking.getResourceId()).orElse(null);
+        Resource resource = findResourceWithoutImages(booking.getResourceId());
         if (resource == null) {
             throw new RuntimeException("Resource not found");
         }

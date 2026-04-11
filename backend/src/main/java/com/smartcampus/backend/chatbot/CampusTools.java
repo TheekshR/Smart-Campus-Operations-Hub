@@ -3,8 +3,8 @@ package com.smartcampus.backend.chatbot;
 import com.smartcampus.backend.booking.model.Booking;
 import com.smartcampus.backend.booking.model.BookingSuggestion;
 import com.smartcampus.backend.booking.service.BookingService;
-import com.smartcampus.backend.issue.model.Issue;
-import com.smartcampus.backend.issue.repository.IssueRepository;
+import com.smartcampus.backend.issue.dto.IssueSummaryDTO;
+import com.smartcampus.backend.issue.service.IssueService;
 import com.smartcampus.backend.resource.dto.ResourceSummaryDTO;
 import com.smartcampus.backend.resource.service.ResourceService;
 import org.springframework.stereotype.Component;
@@ -16,14 +16,14 @@ import java.util.stream.Collectors;
 public class CampusTools {
 
     private final BookingService bookingService;
-    private final IssueRepository issueRepository;
+    private final IssueService issueService;
     private final ResourceService resourceService;
 
     public CampusTools(BookingService bookingService,
-                       IssueRepository issueRepository,
+                       IssueService issueService,
                        ResourceService resourceService) {
         this.bookingService = bookingService;
-        this.issueRepository = issueRepository;
+        this.issueService = issueService;
         this.resourceService = resourceService;
     }
 
@@ -33,7 +33,7 @@ public class CampusTools {
                 .filter(b -> "APPROVED".equals(b.getStatus()) || "PENDING".equals(b.getStatus()))
                 .count();
 
-        List<Issue> issues = issueRepository.findByUserId(userId);
+        List<IssueSummaryDTO> issues = issueService.getIssuesByUserId(userId);
         long openTickets = issues.stream()
                 .filter(i -> !"FIXED".equals(i.getStatus()))
                 .count();
@@ -139,12 +139,12 @@ public class CampusTools {
 
     // ===== TOOL: Get user's issues/tickets =====
     public String getUserIssues(String userId) {
-        List<Issue> issues = issueRepository.findByUserId(userId);
+        List<IssueSummaryDTO> issues = issueService.getIssuesByUserId(userId);
         if (issues.isEmpty()) {
             return "No reported issues found for this user.";
         }
         StringBuilder sb = new StringBuilder();
-        for (Issue i : issues) {
+        for (IssueSummaryDTO i : issues) {
             sb.append(String.format("- Issue %s | Resource: %s | Priority: %s | Status: %s | Description: %s\n",
                     i.getId(), i.getResourceId(), i.getPriority(), i.getStatus(), i.getDescription()));
         }
