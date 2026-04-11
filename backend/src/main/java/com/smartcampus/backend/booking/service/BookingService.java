@@ -97,6 +97,7 @@ public class BookingService {
         return repository.findByDate(date);
     }
 
+    // ================= UPDATE BOOKING STATUS =================
     public Booking updateBookingStatus(String id, String status, String reason, String admin) {
         Booking existingBooking = repository.findById(id).orElse(null);
 
