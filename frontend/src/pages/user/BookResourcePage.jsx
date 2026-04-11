@@ -155,7 +155,6 @@ export default function BookResourcePage() {
                 </MenuItem>
               ))}
             </TextField>
-
             <TextField
               label="Date"
               name="date"
@@ -165,7 +164,7 @@ export default function BookResourcePage() {
               InputLabelProps={{ shrink: true }}
               required
             />
-
+            //
             <TextField
               label="Start Time"
               name="startTime"
@@ -175,7 +174,6 @@ export default function BookResourcePage() {
               InputLabelProps={{ shrink: true }}
               required
             />
-
             <TextField
               label="End Time"
               name="endTime"
@@ -185,7 +183,6 @@ export default function BookResourcePage() {
               InputLabelProps={{ shrink: true }}
               required
             />
-
             <TextField
               label="Purpose"
               name="purpose"
@@ -193,7 +190,6 @@ export default function BookResourcePage() {
               onChange={handleChange}
               required
             />
-
             <TextField
               label="Attendees"
               name="attendees"
@@ -202,7 +198,6 @@ export default function BookResourcePage() {
               onChange={handleChange}
               required
             />
-
             <Button
               type="submit"
               variant="contained"
