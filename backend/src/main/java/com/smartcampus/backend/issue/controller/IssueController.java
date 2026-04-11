@@ -1,11 +1,15 @@
 package com.smartcampus.backend.issue.controller;
 
+import com.smartcampus.backend.issue.dto.IssueSummaryDTO;
 import com.smartcampus.backend.issue.model.Issue;
 import com.smartcampus.backend.issue.service.IssueService;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Base64;
 import java.util.List;
 
 // Allow cross-origin requests from the frontend (React app running on localhost:3000)
@@ -49,44 +53,56 @@ public class IssueController {
     // Only ADMIN can view all issues
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public List<Issue> getAll() {
+    public List<IssueSummaryDTO> getAll() {
         return service.getAllIssues();
     }
 
     // ================= GET ISSUE BY ID =================
 
-    // USER, ADMIN, and TECHNICIAN can view a specific issue
     @PreAuthorize("hasAnyRole('USER','ADMIN','TECHNICIAN')")
     @GetMapping("/{id}")
     public Issue getById(@PathVariable String id) {
-        // Fetch issue by ID
         return service.getIssueById(id);
+    }
+
+    // ================= GET ISSUE IMAGE =================
+
+    @GetMapping("/{id}/images/{index}")
+    public ResponseEntity<byte[]> getIssueImage(@PathVariable String id, @PathVariable int index) {
+        Issue issue = service.getIssueWithImages(id);
+        if (issue == null || issue.getImageBase64List() == null
+                || index < 0 || index >= issue.getImageBase64List().size()) {
+            return ResponseEntity.notFound().build();
+        }
+        byte[] imageBytes = Base64.getDecoder().decode(issue.getImageBase64List().get(index));
+        String imageType = issue.getImageTypes().get(index);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(imageType))
+                .header("Cache-Control", "public, max-age=86400")
+                .body(imageBytes);
     }
 
     // ================= GET ISSUES BY USER =================
 
-    // USER and ADMIN can view issues created by a specific user
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping("/user/{userId}")
-    public List<Issue> getByUserId(@PathVariable String userId) {
+    public List<IssueSummaryDTO> getByUserId(@PathVariable String userId) {
         return service.getIssuesByUserId(userId);
     }
 
     // ================= GET ISSUES BY RESOURCE =================
 
-    // ADMIN and TECHNICIAN can view issues related to a specific resource
     @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN')")
     @GetMapping("/resource/{resourceId}")
-    public List<Issue> getByResourceId(@PathVariable String resourceId) {
+    public List<IssueSummaryDTO> getByResourceId(@PathVariable String resourceId) {
         return service.getIssuesByResourceId(resourceId);
     }
 
     // ================= GET ISSUES BY STATUS =================
 
-    // ADMIN and TECHNICIAN can filter issues by status
     @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN')")
     @GetMapping("/status/{status}")
-    public List<Issue> getByStatus(@PathVariable String status) {
+    public List<IssueSummaryDTO> getByStatus(@PathVariable String status) {
         return service.getIssuesByStatus(status);
     }
 

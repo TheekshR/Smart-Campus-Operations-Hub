@@ -87,13 +87,10 @@ export default function MyTicketsPage() {
                   <p>Resolution Note: {issue.resolutionNote || "-"}</p>
                 </div>
 
-                {issue.imageUrls && issue.imageUrls.length > 0 && (
-                  <div className="mt-2">
-                    <p className="font-semibold text-sm">Images:</p>
-                    {issue.imageUrls.map((img, index) => (
-                      <p key={index} className="text-sm">
-                        {img}
-                      </p>
+                {issue.imageCount > 0 && (
+                  <div className={`mt-2 grid gap-1 ${issue.imageCount === 1 ? "grid-cols-1" : issue.imageCount === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+                    {Array.from({ length: issue.imageCount }, (_, i) => (
+                      <img key={i} src={`http://localhost:8081/api/issues/${issue.id}/images/${i}`} alt={`Issue evidence ${i + 1}`} className="w-full h-28 object-cover rounded border" loading="lazy" />
                     ))}
                   </div>
                 )}

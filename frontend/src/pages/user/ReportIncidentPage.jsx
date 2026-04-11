@@ -24,8 +24,10 @@ export default function ReportIncidentPage() {
   useEffect(() => {
     const fetchResources = async () => {
       try {
-        const response = await api.get("/api/resources");
-        setResources(response.data.filter((resource) => resource.status === "ACTIVE"));
+        const response = await api.get("/api/resources", {
+          params: { status: "ACTIVE" },
+        });
+        setResources(response.data);
       } catch (err) {
         console.error("Failed to fetch resources:", err);
       }

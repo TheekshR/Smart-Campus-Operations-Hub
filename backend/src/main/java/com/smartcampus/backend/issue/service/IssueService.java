@@ -1,5 +1,6 @@
 package com.smartcampus.backend.issue.service;
 
+import com.smartcampus.backend.issue.dto.IssueSummaryDTO;
 import com.smartcampus.backend.issue.model.Issue;
 import com.smartcampus.backend.issue.repository.IssueRepository;
 import com.smartcampus.backend.notification.model.NotificationType;
@@ -7,6 +8,9 @@ import com.smartcampus.backend.notification.service.NotificationService;
 import com.smartcampus.backend.resource.enums.ResourceStatus;
 import com.smartcampus.backend.resource.model.Resource;
 import com.smartcampus.backend.resource.repository.ResourceRepository;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,6 +18,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.stream.Collectors;
 // Contains business logic for managing issues.
 @Service
 public class IssueService {
@@ -22,15 +27,18 @@ public class IssueService {
     private final ResourceRepository resourceRepository;
     private final NotificationService notificationService;
     private final IssueCommentService issueCommentService;
+    private final MongoTemplate mongoTemplate;
 
     public IssueService(IssueRepository repository,
                         ResourceRepository resourceRepository,
                         NotificationService notificationService,
-                        IssueCommentService issueCommentService) {
+                        IssueCommentService issueCommentService,
+                        MongoTemplate mongoTemplate) {
         this.repository = repository;
         this.resourceRepository = resourceRepository;
         this.notificationService = notificationService;
         this.issueCommentService = issueCommentService;
+        this.mongoTemplate = mongoTemplate;
     }
 
     public Issue createIssueWithImages(String resourceId,
@@ -39,9 +47,7 @@ public class IssueService {
                                        String priority,
                                        List<MultipartFile> images) {
 
-        Resource resource = resourceRepository.findById(resourceId).orElse(null);
-
-        if (resource == null) {
+        if (!resourceRepository.existsById(resourceId)) {
             throw new RuntimeException("Resource not found");
         }
 
@@ -80,14 +86,25 @@ public class IssueService {
 
         Issue savedIssue = repository.save(issue);
 
-        resource.setStatus(ResourceStatus.OUT_OF_SERVICE);
-        resourceRepository.save(resource);
+        Resource resource = resourceRepository.findById(resourceId).orElse(null);
+        if (resource != null) {
+            resource.setStatus(ResourceStatus.OUT_OF_SERVICE);
+            resourceRepository.save(resource);
+        }
 
         return savedIssue;
     }
 
-    public List<Issue> getAllIssues() {
-        return repository.findAll();
+    private Query excludeImages() {
+        Query query = new Query();
+        query.fields().exclude("imageBase64List");
+        return query;
+    }
+
+    public List<IssueSummaryDTO> getAllIssues() {
+        return mongoTemplate.find(excludeImages(), Issue.class).stream()
+                .map(IssueSummaryDTO::from)
+                .collect(Collectors.toList());
     }
 
     public Issue getIssueById(String id) {
@@ -100,16 +117,32 @@ public class IssueService {
         return issue;
     }
 
-    public List<Issue> getIssuesByUserId(String userId) {
-        return repository.findByUserId(userId);
+    public List<IssueSummaryDTO> getIssuesByUserId(String userId) {
+        Query query = excludeImages();
+        query.addCriteria(Criteria.where("userId").is(userId));
+        return mongoTemplate.find(query, Issue.class).stream()
+                .map(IssueSummaryDTO::from)
+                .collect(Collectors.toList());
     }
 
-    public List<Issue> getIssuesByResourceId(String resourceId) {
-        return repository.findByResourceId(resourceId);
+    public List<IssueSummaryDTO> getIssuesByResourceId(String resourceId) {
+        Query query = excludeImages();
+        query.addCriteria(Criteria.where("resourceId").is(resourceId));
+        return mongoTemplate.find(query, Issue.class).stream()
+                .map(IssueSummaryDTO::from)
+                .collect(Collectors.toList());
     }
 
-    public List<Issue> getIssuesByStatus(String status) {
-        return repository.findByStatus(status);
+    public List<IssueSummaryDTO> getIssuesByStatus(String status) {
+        Query query = excludeImages();
+        query.addCriteria(Criteria.where("status").is(status));
+        return mongoTemplate.find(query, Issue.class).stream()
+                .map(IssueSummaryDTO::from)
+                .collect(Collectors.toList());
+    }
+
+    public Issue getIssueWithImages(String id) {
+        return repository.findById(id).orElse(null);
     }
 
     public Issue assignTechnician(String id, String technicianId, String admin) {

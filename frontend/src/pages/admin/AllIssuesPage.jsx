@@ -51,10 +51,10 @@ export default function AllIssuesPage() {
           const resource = resourceMap[issue.resourceId];
           return (
             <Card key={issue.id} className="overflow-hidden">
-              {issue.imageBase64List && issue.imageTypes && issue.imageBase64List.length > 0 && (
-                <div className={`grid gap-1 p-2 pb-0 ${issue.imageBase64List.length === 1 ? "grid-cols-1" : issue.imageBase64List.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
-                  {issue.imageBase64List.map((img, i) => (
-                    <img key={i} src={`data:${issue.imageTypes[i]};base64,${img}`} alt={`Issue evidence ${i + 1}`} className="w-full h-28 object-cover rounded border" />
+              {issue.imageCount > 0 && (
+                <div className={`grid gap-1 p-2 pb-0 ${issue.imageCount === 1 ? "grid-cols-1" : issue.imageCount === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+                  {Array.from({ length: issue.imageCount }, (_, i) => (
+                    <img key={i} src={`http://localhost:8081/api/issues/${issue.id}/images/${i}`} alt={`Issue evidence ${i + 1}`} className="w-full h-28 object-cover rounded border" loading="lazy" />
                   ))}
                 </div>
               )}
