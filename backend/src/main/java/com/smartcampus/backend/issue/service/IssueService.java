@@ -22,7 +22,7 @@ public class IssueService {
     private final ResourceRepository resourceRepository;
     private final NotificationService notificationService;
     private final IssueCommentService issueCommentService;
-
+    
     public IssueService(IssueRepository repository,
                         ResourceRepository resourceRepository,
                         NotificationService notificationService,

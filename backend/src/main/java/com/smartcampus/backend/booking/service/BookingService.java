@@ -27,7 +27,7 @@ public class BookingService {
         this.resourceRepository = resourceRepository;
         this.notificationService = notificationService;
     }
-
+    // ================= CREATE BOOKING =================
     public Booking createBooking(Booking booking) {
 
         Resource resource = resourceRepository.findById(booking.getResourceId()).orElse(null);
@@ -60,7 +60,7 @@ public class BookingService {
             LocalTime existingEnd = LocalTime.parse(existingBooking.getEndTime());
 
             boolean overlaps = newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart);
-
+            // If there is an overlap, we can either reject the booking or suggest the next available slot.
             if (overlaps) {
                 throw new RuntimeException("Booking conflict: resource is already booked for the selected time");
             }
@@ -119,7 +119,7 @@ public class BookingService {
                     savedBooking.getId()
             );
         }
-
+        // Notify user if booking is rejected with reason
         if ("REJECTED".equals(status)) {
             notificationService.createNotificationForUser(
                     savedBooking.getUserId(),
