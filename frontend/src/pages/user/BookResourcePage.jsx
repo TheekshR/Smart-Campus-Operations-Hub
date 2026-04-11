@@ -104,7 +104,7 @@ export default function BookResourcePage() {
   if (loading) {
     return <Box sx={{ p: 3 }}>Loading...</Box>;
   }
-
+  // Display error message if there was an issue fetching user data
   if (error) {
     return <Box sx={{ p: 3 }}>{error}</Box>;
   }
