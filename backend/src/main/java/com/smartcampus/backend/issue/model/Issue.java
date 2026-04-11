@@ -6,7 +6,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
-
+// Represents an issue reported by a user(e.g., broken equipment, room issues, etc.)
 @Data
 @Document(collection = "issues")
 public class Issue {

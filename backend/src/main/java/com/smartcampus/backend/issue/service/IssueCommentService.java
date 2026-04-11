@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
-
+// Contains business logic for managing issue comments (adding, updating, deleting, and retrieving comments).
 @Service
 public class IssueCommentService {
 

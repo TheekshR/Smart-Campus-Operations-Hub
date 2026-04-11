@@ -3,7 +3,7 @@ package com.smartcampus.backend.issue.model;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
+// Represents a comment made on an issue by a user (reporter, technician, or admin)
 @Data
 @Document(collection = "issue_comments")
 public class IssueComment {

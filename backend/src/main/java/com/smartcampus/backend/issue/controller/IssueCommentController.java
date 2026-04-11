@@ -11,7 +11,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
+//Handles HTTP requests related to issue comments (CRUD operations)
 @RestController
 @RequestMapping("/api/issues")
 public class IssueCommentController {
