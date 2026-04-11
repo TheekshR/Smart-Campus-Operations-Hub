@@ -71,7 +71,7 @@ export default function ViewResourcesPage() {
               <img
                 src={`data:${resource.imageType};base64,${resource.imageBase64}`}
                 alt={resource.name}
-                className="w-full h-44 object-cover"
+                className="w-full h-44 object-cover block"
               />
             )}
             <CardContent className="pt-4">
