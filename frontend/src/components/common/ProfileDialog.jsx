@@ -10,6 +10,7 @@ import {
   TextField,
   Typography,
   Alert,
+  Divider,
 } from "@mui/material";
 import api from "../../api/axios";
 
@@ -19,6 +20,8 @@ export default function ProfileDialog({ open, onClose, user, onProfileUpdated })
     department: "",
     bio: "",
   });
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationPrefs, setNotificationPrefs] = useState({});
   const [message, setMessage] = useState("");
   const [severity, setSeverity] = useState("success");
   const [saving, setSaving] = useState(false);
@@ -30,6 +33,8 @@ export default function ProfileDialog({ open, onClose, user, onProfileUpdated })
         department: user.department || "",
         bio: user.bio || "",
       });
+      setNotificationsEnabled(user.notificationsEnabled ?? true);
+      setNotificationPrefs(user.notificationPreferences || {});
       setMessage("");
       setSeverity("success");
     }
@@ -53,23 +58,37 @@ export default function ProfileDialog({ open, onClose, user, onProfileUpdated })
     }));
   };
 
+  const handleTogglePref = (key) => {
+    setNotificationPrefs((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setMessage("");
 
     try {
-      const response = await api.put("/api/users/me", formData);
-      onProfileUpdated(response.data);
+      const profileResponse = await api.put("/api/users/me", formData);
 
-      setMessage("Profile updated successfully.");
+      await api.put("/api/users/me/notification-settings", {
+        notificationsEnabled,
+        notificationPreferences: notificationPrefs,
+      });
+
+      const refreshedUser = await api.get("/api/users/me");
+      onProfileUpdated(refreshedUser.data || profileResponse.data);
+
+      setMessage("Profile and notification settings updated successfully.");
       setSeverity("success");
     } catch (error) {
-      console.error("Failed to update profile:", error);
+      console.error("Failed to update profile/settings:", error);
 
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.error ||
-        "Failed to update profile.";
+        "Failed to update profile/settings.";
 
       setMessage(errorMessage);
       setSeverity("error");
@@ -200,6 +219,47 @@ export default function ProfileDialog({ open, onClose, user, onProfileUpdated })
               "& .MuiOutlinedInput-root": { borderRadius: 2 },
             }}
           />
+        </Box>
+
+        <Divider sx={{ my: 3 }} />
+
+        <Box>
+          <Typography variant="h6" fontWeight="700" sx={{ mb: 2 }}>
+            Notification Settings
+          </Typography>
+
+          <Button
+            variant={notificationsEnabled ? "contained" : "outlined"}
+            onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+            sx={{ mb: 2 }}
+          >
+            {notificationsEnabled ? "Disable All Notifications" : "Enable Notifications"}
+          </Button>
+
+          <Box sx={{ display: "grid", gap: 1.5 }}>
+            {Object.keys(notificationPrefs).map((key) => (
+              <Box
+                key={key}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  p: 1.5,
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 2,
+                }}
+              >
+                <Typography>{key}</Typography>
+                <Button
+                  size="small"
+                  variant={notificationPrefs[key] ? "contained" : "outlined"}
+                  onClick={() => handleTogglePref(key)}
+                >
+                  {notificationPrefs[key] ? "ON" : "OFF"}
+                </Button>
+              </Box>
+            ))}
+          </Box>
         </Box>
       </DialogContent>
 
