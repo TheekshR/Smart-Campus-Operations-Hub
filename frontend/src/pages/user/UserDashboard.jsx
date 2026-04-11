@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Grid, Card, CardContent, Typography } from "@mui/material";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PageHeader from "../../components/common/PageHeader";
 import StatCard from "../../components/common/StatCard";
 import api from "../../api/axios";
@@ -100,55 +100,46 @@ export default function UserDashboard() {
   }, [bookings, resourceMap]);
 
   if (loading) {
-    return <Box sx={{ p: 3 }}>Loading...</Box>;
+    return <div className="p-6">Loading...</div>;
   }
 
   if (error) {
-    return <Box sx={{ p: 3 }}>{error}</Box>;
+    return <div className="p-6">{error}</div>;
   }
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="User Dashboard"
         subtitle="Lecturers and staff can browse resources, request bookings, and track requests here."
       />
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={4}>
-          <StatCard title="My Active Bookings" value={activeBookings} />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <StatCard title="My Open Tickets" value={openTickets} />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <StatCard title="Unread Notifications" value={unreadNotifications.length} />
-        </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <StatCard title="My Active Bookings" value={activeBookings} />
+        <StatCard title="My Open Tickets" value={openTickets} />
+        <StatCard title="Unread Notifications" value={unreadNotifications.length} />
+      </div>
 
-      <Grid container spacing={3}>
-        
-
-        <Grid item xs={12} lg={5}>
-          <Card sx={{ borderRadius: 3, boxShadow: 2, height: "100%" }}>
-            <CardContent>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                My Insights
-              </Typography>
-              <Typography sx={{ mb: 1 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <div className="lg:col-span-5">
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle>My Insights</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p>
                 Total bookings: <strong>{insights.totalBookings}</strong>
-              </Typography>
-              <Typography sx={{ mb: 1 }}>
+              </p>
+              <p>
                 Most used resource: <strong>{insights.mostUsedResource}</strong>
-              </Typography>
-              
-              <Typography>
+              </p>
+              <p>
                 Preferred booking time: <strong>{insights.preferredTime}</strong>
-              </Typography>
+              </p>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

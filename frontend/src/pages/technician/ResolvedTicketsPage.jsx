@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Chip,
-} from "@mui/material";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
@@ -31,8 +25,8 @@ export default function ResolvedTicketsPage() {
       setIssues(filteredIssues);
 
       const map = {};
-      (resourcesRes.data || []).forEach((resource) => {
-        map[resource.id] = resource;
+      (resourcesRes.data || []).forEach((r) => {
+        map[r.id] = r;
       });
       setResourceMap(map);
     } catch (error) {
@@ -41,62 +35,51 @@ export default function ResolvedTicketsPage() {
   };
 
   useEffect(() => {
-    if (currentUser) {
-      fetchResolvedIssues();
-    }
+    if (currentUser) fetchResolvedIssues();
   }, [currentUser]);
 
-  if (loading) {
-    return <Box sx={{ p: 3 }}>Loading...</Box>;
-  }
-
-  if (error) {
-    return <Box sx={{ p: 3 }}>{error}</Box>;
-  }
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (error) return <div className="p-6">{error}</div>;
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Resolved Tickets"
         subtitle="View issues you have completed."
       />
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {issues.map((issue) => {
           const resource = resourceMap[issue.resourceId];
 
           return (
-            <Grid item xs={12} md={6} lg={4} key={issue.id}>
-              <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" fontWeight="bold">
-                    Issue #{issue.id?.slice(-6)}
-                  </Typography>
+            <Card key={issue.id}>
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-bold">
+                  Issue #{issue.id?.slice(-6)}
+                </h3>
 
-                  <Typography sx={{ mt: 1 }}>
-                    Resource: {resource ? resource.name : issue.resourceId}
-                  </Typography>
-                  <Typography>
-                    Location: {resource ? resource.location : "-"}
-                  </Typography>
-                  <Typography>User ID: {issue.userId}</Typography>
-                  <Typography>Description: {issue.description}</Typography>
-                  <Typography>Priority: {issue.priority}</Typography>
+                <div className="mt-2 space-y-1 text-sm">
+                  <p>Resource: {resource ? resource.name : issue.resourceId}</p>
+                  <p>Location: {resource ? resource.location : "-"}</p>
+                  <p>User ID: {issue.userId}</p>
+                  <p>Description: {issue.description}</p>
+                  <p>Priority: {issue.priority}</p>
+                </div>
 
-                  <Box sx={{ mt: 1, mb: 1 }}>
-                    <Chip label={issue.status} color="success" />
-                  </Box>
+                <div className="my-2">
+                  <Badge variant="success">{issue.status}</Badge>
+                </div>
 
-                  <Typography>
-                    Resolution Note: {issue.resolutionNote || "-"}
-                  </Typography>
-                  <IssueCommentsSection issueId={issue.id} />
-                </CardContent>
-              </Card>
-            </Grid>
+                <p className="text-sm">
+                  Resolution Note: {issue.resolutionNote || "-"}
+                </p>
+                <IssueCommentsSection issueId={issue.id} />
+              </CardContent>
+            </Card>
           );
         })}
-      </Grid>
-    </Box>
+      </div>
+    </div>
   );
 }

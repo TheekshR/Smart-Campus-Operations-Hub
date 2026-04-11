@@ -1,34 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Box,
-  Avatar,
-  IconButton,
-  Badge,
-  Menu,
-  MenuItem,
-  ListItemText,
-  Divider,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from "@mui/material";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import CircleIcon from "@mui/icons-material/Circle";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Bell, Circle, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
 import ProfileDialog from "../common/ProfileDialog";
 
-export default function Topbar({ role = "user" }) {
+export default function Topbar({ role = "user", onToggleSidebar, sidebarOpen }) {
   const { currentUser } = useCurrentUser();
   const navigate = useNavigate();
 
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileUser, setProfileUser] = useState(null);
@@ -46,15 +37,15 @@ export default function Topbar({ role = "user" }) {
     technician: "/technician/notifications",
   };
 
-  const open = Boolean(anchorEl);
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.read).length,
+    [notifications]
+  );
 
-  const unreadCount = useMemo(() => {
-    return notifications.filter((n) => !n.read).length;
-  }, [notifications]);
-
-  const latestNotifications = useMemo(() => {
-    return notifications.slice(0, 5);
-  }, [notifications]);
+  const latestNotifications = useMemo(
+    () => notifications.slice(0, 5),
+    [notifications]
+  );
 
   const fetchNotifications = async () => {
     try {
@@ -71,23 +62,14 @@ export default function Topbar({ role = "user" }) {
     setProfileUser(currentUser);
     fetchNotifications();
 
-    const interval = setInterval(() => {
-      fetchNotifications();
-    }, 5000);
-
+    const interval = setInterval(fetchNotifications, 5000);
     return () => clearInterval(interval);
   }, [currentUser]);
 
-  const handleBellClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
-  };
+  const handleBellClick = () => setMenuOpen(!menuOpen);
 
   const handleViewAll = () => {
-    handleCloseMenu();
+    setMenuOpen(false);
     navigate(notificationRouteMap[role] || "/user/notifications");
   };
 
@@ -101,16 +83,8 @@ export default function Topbar({ role = "user" }) {
       console.error("Failed to mark notification as read:", err);
     }
 
-    handleCloseMenu();
+    setMenuOpen(false);
     navigate(notificationRouteMap[role] || "/user/notifications");
-  };
-
-  const openLogoutDialog = () => {
-    setLogoutDialogOpen(true);
-  };
-
-  const closeLogoutDialog = () => {
-    setLogoutDialogOpen(false);
   };
 
   const confirmLogout = () => {
@@ -119,151 +93,145 @@ export default function Topbar({ role = "user" }) {
 
   return (
     <>
-      <AppBar
-        position="static"
-        elevation={0}
-        sx={{
-          bgcolor: "white",
-          color: "#111827",
-          borderBottom: "1px solid #e5e7eb",
-        }}
-      >
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-          <Typography variant="h6" fontWeight="600">
+      <header className="bg-white border-b px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onToggleSidebar} className="h-8 w-8">
+            {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+          </Button>
+          <h2 className="text-lg font-semibold">
             {titleMap[role] || "Smart Campus"}
-          </Typography>
+          </h2>
+        </div>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <IconButton onClick={handleBellClick}>
-              <Badge badgeContent={unreadCount} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-
-            <Menu
-              anchorEl={anchorEl}
-              open={open}
-              onClose={handleCloseMenu}
-              PaperProps={{
-                sx: {
-                  width: 360,
-                  maxWidth: "90vw",
-                  mt: 1,
-                  borderRadius: 2,
-                },
-              }}
+        <div className="flex items-center gap-3">
+          {/* Notification bell */}
+          <div className="relative">
+            <button
+              onClick={handleBellClick}
+              className="relative p-2 rounded-full hover:bg-muted transition-colors"
             >
-              <Box sx={{ px: 2, py: 1.5 }}>
-                <Typography variant="subtitle1" fontWeight="700">
-                  Notifications
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {unreadCount} unread
-                </Typography>
-              </Box>
-
-              <Divider />
-
-              {latestNotifications.length === 0 ? (
-                <Box sx={{ px: 2, py: 3 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    No notifications available.
-                  </Typography>
-                </Box>
-              ) : (
-                latestNotifications.map((notification) => (
-                  <MenuItem
-                    key={notification.id}
-                    onClick={() => handleOpenNotification(notification)}
-                    sx={{
-                      alignItems: "flex-start",
-                      py: 1.5,
-                      whiteSpace: "normal",
-                    }}
-                  >
-                    <Box sx={{ mr: 1, mt: 0.5 }}>
-                      {!notification.read && (
-                        <CircleIcon sx={{ fontSize: 10, color: "#1976d2" }} />
-                      )}
-                    </Box>
-
-                    <ListItemText
-                      primary={notification.title}
-                      secondary={notification.message}
-                      primaryTypographyProps={{
-                        fontWeight: notification.read ? 500 : 700,
-                        fontSize: 14,
-                      }}
-                      secondaryTypographyProps={{
-                        fontSize: 12,
-                      }}
-                    />
-                  </MenuItem>
-                ))
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-medium">
+                  {unreadCount}
+                </span>
               )}
+            </button>
 
-              <Divider />
+            {/* Notification dropdown */}
+            {menuOpen && (
+              <div className="absolute right-0 mt-2 w-[360px] bg-background border rounded-lg shadow-lg z-50">
+                <div className="px-4 py-3 border-b">
+                  <p className="font-bold">Notifications</p>
+                  <p className="text-sm text-muted-foreground">
+                    {unreadCount} unread
+                  </p>
+                </div>
 
-              <Box sx={{ p: 1.5 }}>
-                <Button fullWidth variant="outlined" onClick={handleViewAll}>
-                  View All Notifications
-                </Button>
-              </Box>
-            </Menu>
+                {latestNotifications.length === 0 ? (
+                  <div className="px-4 py-6 text-sm text-muted-foreground">
+                    No notifications available.
+                  </div>
+                ) : (
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {latestNotifications.map((notification) => (
+                      <button
+                        key={notification.id}
+                        onClick={() => handleOpenNotification(notification)}
+                        className="w-full text-left px-4 py-3 hover:bg-muted flex items-start gap-2 border-b last:border-b-0"
+                      >
+                        <span className="mt-1.5">
+                          {!notification.read && (
+                            <Circle className="h-2.5 w-2.5 fill-blue-500 text-blue-500" />
+                          )}
+                        </span>
+                        <div>
+                          <p
+                            className={`text-sm ${
+                              notification.read ? "font-medium" : "font-bold"
+                            }`}
+                          >
+                            {notification.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {notification.message}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
 
-            {currentUser && (
-              <Button
-                onClick={() => setProfileOpen(true)}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  textTransform: "none",
-                  color: "#111827",
-                  borderRadius: 999,
-                  px: 1.5,
-                  minWidth: "unset",
-                }}
-              >
-                <Typography variant="body2">
-                  {currentUser.name} ({currentUser.role})
-                </Typography>
-                <Avatar src={currentUser.picture} alt={currentUser.name} />
-              </Button>
+                <div className="p-3 border-t">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleViewAll}
+                  >
+                    View All Notifications
+                  </Button>
+                </div>
+              </div>
             )}
+          </div>
 
-            <Button
-              variant="outlined"
-              color="error"
-              size="small"
-              onClick={openLogoutDialog}
+          {/* Profile button */}
+          {currentUser && (
+            <button
+              onClick={() => setProfileOpen(true)}
+              className="flex items-center gap-2 rounded-full px-3 py-1 hover:bg-muted transition-colors"
             >
-              Logout
-            </Button>
-          </Box>
-        </Toolbar>
-      </AppBar>
+              <span className="text-sm">
+                {currentUser.name} ({currentUser.role})
+              </span>
+              <Avatar
+                src={currentUser.picture}
+                alt={currentUser.name}
+                className="h-8 w-8"
+              />
+            </button>
+          )}
 
+          {/* Logout button */}
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setLogoutDialogOpen(true)}
+          >
+            Logout
+          </Button>
+        </div>
+      </header>
+
+      {/* Profile dialog */}
       <ProfileDialog
         open={profileOpen}
         onClose={() => setProfileOpen(false)}
         user={profileUser}
-        onProfileUpdated={(updatedUser) => setProfileUser(updatedUser)}
+        onProfileUpdated={(u) => setProfileUser(u)}
       />
 
-      <Dialog open={logoutDialogOpen} onClose={closeLogoutDialog}>
-        <DialogTitle>Confirm Logout</DialogTitle>
+      {/* Logout confirmation dialog */}
+      <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
         <DialogContent>
-          <Typography>
-            Are you sure you want to logout from the system?
-          </Typography>
+          <DialogHeader>
+            <DialogTitle>Confirm Logout</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to logout from the system?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setLogoutDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmLogout}>
+              Logout
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={closeLogoutDialog}>Cancel</Button>
-          <Button variant="contained" color="error" onClick={confirmLogout}>
-            Logout
-          </Button>
-        </DialogActions>
       </Dialog>
     </>
   );

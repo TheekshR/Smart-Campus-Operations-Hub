@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Button,
-  Alert,
-} from "@mui/material";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
@@ -48,65 +42,47 @@ export default function MyBookingsPage() {
     }
   };
 
-  if (loading) {
-    return <Box sx={{ p: 3 }}>Loading...</Box>;
-  }
-
-  if (error) {
-    return <Box sx={{ p: 3 }}>{error}</Box>;
-  }
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (error) return <div className="p-6">{error}</div>;
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="My Bookings"
         subtitle="View your booking requests and their current status."
       />
 
       {message && (
-        <Alert severity={message.includes("successfully") ? "success" : "error"} sx={{ mb: 2 }}>
+        <Alert variant={message.includes("successfully") ? "success" : "destructive"} className="mb-4">
           {message}
         </Alert>
       )}
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {bookings.map((booking) => (
-          <Grid item xs={12} md={6} lg={4} key={booking.id}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-              <CardContent>
-                <Typography variant="h6" fontWeight="bold">
-                  Booking #{booking.id?.slice(-6)}
-                </Typography>
-                <Typography sx={{ mt: 1 }}>Resource ID: {booking.resourceId}</Typography>
-                <Typography>Date: {booking.date}</Typography>
-                <Typography>
-                  Time: {booking.startTime} - {booking.endTime}
-                </Typography>
-                <Typography>Purpose: {booking.purpose}</Typography>
-                <Typography>Attendees: {booking.attendees}</Typography>
-                <Typography>Status: {booking.status}</Typography>
-                <Typography>
-                  Review Reason: {booking.reviewReason || "-"}
-                </Typography>
-                <Typography>
-                  Approved By: {booking.approvedBy || "-"}
-                </Typography>
+          <Card key={booking.id}>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-bold">Booking #{booking.id?.slice(-6)}</h3>
+              <div className="mt-2 space-y-1 text-sm">
+                <p>Resource ID: {booking.resourceId}</p>
+                <p>Date: {booking.date}</p>
+                <p>Time: {booking.startTime} - {booking.endTime}</p>
+                <p>Purpose: {booking.purpose}</p>
+                <p>Attendees: {booking.attendees}</p>
+                <p>Status: {booking.status}</p>
+                <p>Review Reason: {booking.reviewReason || "-"}</p>
+                <p>Approved By: {booking.approvedBy || "-"}</p>
+              </div>
 
-                {(booking.status === "PENDING" || booking.status === "APPROVED") && (
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    sx={{ mt: 2 }}
-                    onClick={() => handleCancel(booking.id)}
-                  >
-                    Cancel Booking
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
+              {(booking.status === "PENDING" || booking.status === "APPROVED") && (
+                <Button variant="destructive" size="sm" className="mt-3" onClick={() => handleCancel(booking.id)}>
+                  Cancel Booking
+                </Button>
+              )}
+            </CardContent>
+          </Card>
         ))}
-      </Grid>
-    </Box>
+      </div>
+    </div>
   );
 }

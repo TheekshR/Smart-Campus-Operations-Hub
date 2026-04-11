@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Chip,
-} from "@mui/material";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
@@ -42,88 +36,74 @@ export default function MyTicketsPage() {
     fetchData();
   }, [currentUser]);
 
-  const getStatusColor = (status) => {
+  const getStatusVariant = (status) => {
     switch (status) {
       case "REPORTED":
         return "warning";
       case "ASSIGNED":
         return "info";
       case "IN_PROGRESS":
-        return "primary";
+        return "default";
       case "FIXED":
         return "success";
       default:
-        return "default";
+        return "secondary";
     }
   };
 
-  if (loading) {
-    return <Box sx={{ p: 3 }}>Loading...</Box>;
-  }
-
-  if (error) {
-    return <Box sx={{ p: 3 }}>{error}</Box>;
-  }
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (error) return <div className="p-6">{error}</div>;
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="My Tickets"
         subtitle="Track the issues you have reported and their current progress."
       />
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {issues.map((issue) => {
           const resource = resourceMap[issue.resourceId];
 
           return (
-            <Grid item xs={12} md={6} lg={4} key={issue.id}>
-              <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" fontWeight="bold">
-                    Issue #{issue.id?.slice(-6)}
-                  </Typography>
+            <Card key={issue.id}>
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-bold">Issue #{issue.id?.slice(-6)}</h3>
 
-                  <Typography sx={{ mt: 1 }}>
-                    Resource: {resource ? resource.name : issue.resourceId}
-                  </Typography>
-                  <Typography>
-                    Location: {resource ? resource.location : "-"}
-                  </Typography>
-                  <Typography>Description: {issue.description}</Typography>
-                  <Typography>Priority: {issue.priority}</Typography>
+                <div className="mt-2 space-y-1 text-sm">
+                  <p>Resource: {resource ? resource.name : issue.resourceId}</p>
+                  <p>Location: {resource ? resource.location : "-"}</p>
+                  <p>Description: {issue.description}</p>
+                  <p>Priority: {issue.priority}</p>
+                </div>
 
-                  <Box sx={{ mt: 1, mb: 1 }}>
-                    <Chip label={issue.status} color={getStatusColor(issue.status)} />
-                  </Box>
+                <div className="my-2">
+                  <Badge variant={getStatusVariant(issue.status)}>{issue.status}</Badge>
+                </div>
 
-                  <Typography>
-                    Technician ID: {issue.technicianId || "-"}
-                  </Typography>
-                  <Typography>
-                    Assigned By: {issue.assignedBy || "-"}
-                  </Typography>
-                  <Typography>
-                    Resolution Note: {issue.resolutionNote || "-"}
-                  </Typography>
-                  {issue.imageUrls && issue.imageUrls.length > 0 && (
-                  <Box sx={{ mt: 1 }}>
-                    <Typography fontWeight="bold">Images:</Typography>
+                <div className="text-sm space-y-1">
+                  <p>Technician ID: {issue.technicianId || "-"}</p>
+                  <p>Assigned By: {issue.assignedBy || "-"}</p>
+                  <p>Resolution Note: {issue.resolutionNote || "-"}</p>
+                </div>
+
+                {issue.imageUrls && issue.imageUrls.length > 0 && (
+                  <div className="mt-2">
+                    <p className="font-semibold text-sm">Images:</p>
                     {issue.imageUrls.map((img, index) => (
-                      <Typography key={index} variant="body2">
+                      <p key={index} className="text-sm">
                         {img}
-                      </Typography>
+                      </p>
                     ))}
-                  </Box>
-                  
+                  </div>
                 )}
+
                 <IssueCommentsSection issueId={issue.id} />
-                </CardContent>
-              </Card>
-            </Grid>
+              </CardContent>
+            </Card>
           );
         })}
-      </Grid>
-    </Box>
+      </div>
+    </div>
   );
 }

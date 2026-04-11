@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  MenuItem,
-  Alert,
-  Typography,
-} from "@mui/material";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
+import { Alert } from "@/components/ui/alert";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
@@ -95,102 +92,78 @@ export default function ReportIncidentPage() {
     }
   };
 
-  if (loading) {
-    return <Box sx={{ p: 3 }}>Loading...</Box>;
-  }
-
-  if (error) {
-    return <Box sx={{ p: 3 }}>{error}</Box>;
-  }
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (error) return <div className="p-6">{error}</div>;
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Report Incident"
         subtitle="Report a facility or resource issue for maintenance attention."
       />
 
-      <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-        <CardContent>
+      <Card>
+        <CardContent className="pt-6">
           {message && (
-            <Alert severity={message.includes("successfully") ? "success" : "error"} sx={{ mb: 2 }}>
+            <Alert variant={message.includes("successfully") ? "success" : "destructive"} className="mb-4">
               {message}
             </Alert>
           )}
 
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            sx={{ display: "grid", gap: 2 }}
-          >
-            <TextField
-              select
-              label="Resource"
-              name="resourceId"
-              value={formData.resourceId}
-              onChange={handleChange}
-              required
-            >
-              {resources.map((resource) => (
-                <MenuItem key={resource.id} value={resource.id}>
-                  {resource.name} - {resource.location}
-                </MenuItem>
-              ))}
-            </TextField>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="resourceId">Resource</Label>
+              <Select name="resourceId" value={formData.resourceId} onChange={handleChange} required>
+                <option value="">Select resource...</option>
+                {resources.map((resource) => (
+                  <option key={resource.id} value={resource.id}>
+                    {resource.name} - {resource.location}
+                  </option>
+                ))}
+              </Select>
+            </div>
 
-            <TextField
-              label="Description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              multiline
-              minRows={4}
-              required
-            />
-
-            <TextField
-              select
-              label="Priority"
-              name="priority"
-              value={formData.priority}
-              onChange={handleChange}
-              required
-            >
-              <MenuItem value="LOW">LOW</MenuItem>
-              <MenuItem value="MEDIUM">MEDIUM</MenuItem>
-              <MenuItem value="HIGH">HIGH</MenuItem>
-            </TextField>
-
-            <Button variant="outlined" component="label">
-              Upload Up To 3 Images
-              <input
-                type="file"
-                hidden
-                multiple
-                accept="image/*"
-                onChange={handleImageChange}
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={4}
+                required
               />
-            </Button>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="priority">Priority</Label>
+              <Select name="priority" value={formData.priority} onChange={handleChange} required>
+                <option value="">Select priority...</option>
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Upload Up To 3 Images</Label>
+              <Input type="file" multiple accept="image/*" onChange={handleImageChange} />
+            </div>
 
             {selectedImages.length > 0 && (
-              <Box>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  Selected Images:
-                </Typography>
+              <div>
+                <p className="text-sm font-medium mb-1">Selected Images:</p>
                 {selectedImages.map((file, index) => (
-                  <Typography key={index} variant="body2">
+                  <p key={index} className="text-sm text-muted-foreground">
                     {file.name}
-                  </Typography>
+                  </p>
                 ))}
-              </Box>
+              </div>
             )}
 
-            <Button type="submit" variant="contained" sx={{ width: "fit-content" }}>
-              Submit Issue
-            </Button>
-          </Box>
+            <Button type="submit">Submit Issue</Button>
+          </form>
         </CardContent>
       </Card>
-    </Box>
+    </div>
   );
 }

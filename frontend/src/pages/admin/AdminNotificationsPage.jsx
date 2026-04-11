@@ -1,14 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  List,
-  ListItem,
-  ListItemText,
-  Chip,
-} from "@mui/material";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
@@ -18,58 +10,36 @@ export default function AdminNotificationsPage() {
   const [notifications, setNotifications] = useState([]);
 
   const fetchNotifications = async () => {
-    try {
-      const res = await api.get("/api/notifications/me");
-      setNotifications(res.data || []);
-    } catch (err) {
-      console.error("Failed to fetch notifications:", err);
-    }
+    try { const res = await api.get("/api/notifications/me"); setNotifications(res.data || []); } catch (err) { console.error("Failed to fetch notifications:", err); }
   };
 
-  useEffect(() => {
-    if (currentUser) {
-      fetchNotifications();
-    }
-  }, [currentUser]);
+  useEffect(() => { if (currentUser) fetchNotifications(); }, [currentUser]);
 
-  if (loading) {
-    return <Box sx={{ p: 3 }}>Loading...</Box>;
-  }
-
-  if (error) {
-    return <Box sx={{ p: 3 }}>{error}</Box>;
-  }
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (error) return <div className="p-6">{error}</div>;
 
   return (
-    <Box>
-      <PageHeader
-        title="Notifications"
-        subtitle="View system alerts and updates."
-      />
-
-      <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-        <CardContent>
+    <div>
+      <PageHeader title="Notifications" subtitle="View system alerts and updates." />
+      <Card>
+        <CardContent className="pt-6">
           {notifications.length === 0 ? (
-            <Typography>No notifications available.</Typography>
+            <p className="text-muted-foreground">No notifications available.</p>
           ) : (
-            <List>
+            <div className="divide-y">
               {notifications.map((n) => (
-                <ListItem key={n.id} divider>
-                  <ListItemText
-                    primary={n.title}
-                    secondary={n.message}
-                  />
-                  <Chip
-                    label={n.type}
-                    color={n.read ? "default" : "primary"}
-                    size="small"
-                  />
-                </ListItem>
+                <div key={n.id} className="flex items-center justify-between py-3">
+                  <div>
+                    <p className="font-medium">{n.title}</p>
+                    <p className="text-sm text-muted-foreground">{n.message}</p>
+                  </div>
+                  <Badge variant={n.read ? "secondary" : "default"}>{n.type}</Badge>
+                </div>
               ))}
-            </List>
+            </div>
           )}
         </CardContent>
       </Card>
-    </Box>
+    </div>
   );
 }

@@ -1,18 +1,9 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Button,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-} from "@mui/material";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
@@ -28,230 +19,77 @@ export default function BookingRequestsPage() {
 
   const fetchPendingBookings = async () => {
     try {
-      const [bookingsRes, resourcesRes] = await Promise.all([
-        api.get("/api/bookings/status/PENDING"),
-        api.get("/api/resources"),
-      ]);
-
+      const [bookingsRes, resourcesRes] = await Promise.all([api.get("/api/bookings/status/PENDING"), api.get("/api/resources")]);
       setBookings(bookingsRes.data || []);
-
       const map = {};
-      (resourcesRes.data || []).forEach((resource) => {
-        map[resource.id] = resource;
-      });
+      (resourcesRes.data || []).forEach((r) => { map[r.id] = r; });
       setResourceMap(map);
-    } catch (err) {
-      console.error("Failed to fetch pending bookings:", err);
-    }
+    } catch (err) { console.error("Failed to fetch pending bookings:", err); }
   };
 
-  useEffect(() => {
-    if (currentUser) {
-      fetchPendingBookings();
-    }
-  }, [currentUser]);
+  useEffect(() => { if (currentUser) fetchPendingBookings(); }, [currentUser]);
 
   const handleApprove = async (bookingId) => {
     try {
-      await api.put(`/api/bookings/${bookingId}/approve`, null, {
-        params: { admin: currentUser?.name || "ADMIN" },
-      });
-      setMessage("Booking approved successfully.");
-      fetchPendingBookings();
-    } catch (err) {
-      console.error("Failed to approve booking:", err);
-      setMessage("Failed to approve booking.");
-    }
+      await api.put(`/api/bookings/${bookingId}/approve`, null, { params: { admin: currentUser?.name || "ADMIN" } });
+      setMessage("Booking approved successfully."); fetchPendingBookings();
+    } catch (err) { console.error("Failed to approve booking:", err); setMessage("Failed to approve booking."); }
   };
 
-  const openRejectDialog = (bookingId) => {
-    setSelectedBookingId(bookingId);
-    setRejectReason("");
-    setRejectDialogOpen(true);
-  };
-
-  const closeRejectDialog = () => {
-    setRejectDialogOpen(false);
-    setSelectedBookingId(null);
-    setRejectReason("");
-  };
+  const openRejectDialog = (bookingId) => { setSelectedBookingId(bookingId); setRejectReason(""); setRejectDialogOpen(true); };
+  const closeRejectDialog = () => { setRejectDialogOpen(false); setSelectedBookingId(null); setRejectReason(""); };
 
   const handleReject = async () => {
     try {
-      await api.put(`/api/bookings/${selectedBookingId}/reject`, null, {
-        params: {
-          reason: rejectReason,
-          admin: currentUser?.name || "ADMIN",
-        },
-      });
-      setMessage("Booking rejected successfully.");
-      closeRejectDialog();
-      fetchPendingBookings();
-    } catch (err) {
-      console.error("Failed to reject booking:", err);
-      setMessage("Failed to reject booking.");
-    }
+      await api.put(`/api/bookings/${selectedBookingId}/reject`, null, { params: { reason: rejectReason, admin: currentUser?.name || "ADMIN" } });
+      setMessage("Booking rejected successfully."); closeRejectDialog(); fetchPendingBookings();
+    } catch (err) { console.error("Failed to reject booking:", err); setMessage("Failed to reject booking."); }
   };
 
-  if (loading) return <Box sx={{ p: 3 }}>Loading...</Box>;
-  if (error) return <Box sx={{ p: 3 }}>{error}</Box>;
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (error) return <div className="p-6">{error}</div>;
 
   return (
-    <Box sx={{ p: { xs: 3, md: 5 }, bgcolor: "#ffffff", minHeight: "100vh" }}>
-      <PageHeader
-        title="Booking Requests"
-        subtitle="Review and process pending booking requests."
-      />
-
-      {message && (
-        <Alert
-          severity={message.includes("successfully") ? "success" : "error"}
-          sx={{ mb: 4, borderRadius: 2 }}
-        >
-          {message}
-        </Alert>
-      )}
-
-      <Grid container spacing={4}>
+    <div>
+      <PageHeader title="Booking Requests" subtitle="Review and process pending booking requests." />
+      {message && <Alert variant={message.includes("successfully") ? "success" : "destructive"} className="mb-4">{message}</Alert>}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {bookings.map((booking) => {
           const resource = resourceMap[booking.resourceId];
-
           return (
-            <Grid item xs={12} md={6} lg={4} key={booking.id}>
-              <Card
-                sx={{
-                  borderRadius: 3,
-                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.06)",
-                  border: "1px solid #f0f0f0",
-                  transition: "all 0.3s ease",
-                  "&:hover": {
-                    transform: "translateY(-6px)",
-                    boxShadow: "0 12px 35px rgba(0, 0, 0, 0.12)",
-                  },
-                }}
-              >
-                <CardContent sx={{ p: 3.5 }}>
-                  <Typography variant="h6" fontWeight="700" sx={{ color: "#000000", mb: 2.5 }}>
-                    Request #{booking.id?.slice(-6)}
-                  </Typography>
-
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.4, mb: 4 }}>
-                    <Typography sx={{ color: "#555555", fontSize: "0.97rem" }}>
-                      Resource: <strong>{resource ? resource.name : booking.resourceId}</strong>
-                    </Typography>
-                    <Typography sx={{ color: "#555555", fontSize: "0.97rem" }}>
-                      Location: <strong>{resource ? resource.location : "-"}</strong>
-                    </Typography>
-                    <Typography sx={{ color: "#555555", fontSize: "0.97rem" }}>
-                      User ID: <strong>{booking.userId}</strong>
-                    </Typography>
-                    <Typography sx={{ color: "#555555", fontSize: "0.97rem" }}>
-                      Date: <strong>{booking.date}</strong>
-                    </Typography>
-                    <Typography sx={{ color: "#555555", fontSize: "0.97rem" }}>
-                      Time: <strong>{booking.startTime} — {booking.endTime}</strong>
-                    </Typography>
-                    <Typography sx={{ color: "#555555", fontSize: "0.97rem" }}>
-                      Purpose: <strong>{booking.purpose}</strong>
-                    </Typography>
-                    <Typography sx={{ color: "#555555", fontSize: "0.97rem" }}>
-                      Attendees: <strong>{booking.attendees}</strong>
-                    </Typography>
-                    <Typography sx={{ color: "#555555", fontSize: "0.97rem" }}>
-                      Status: <strong>{booking.status}</strong>
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: "flex", gap: 2 }}>
-                    <Button
-                      variant="contained"
-                      onClick={() => handleApprove(booking.id)}
-                      sx={{
-                        flex: 1,
-                        bgcolor: "#000000",
-                        color: "#ffffff",
-                        py: 1.3,
-                        borderRadius: 2,
-                        fontWeight: 600,
-                        "&:hover": { bgcolor: "#222222" },
-                      }}
-                    >
-                      APPROVE
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={() => openRejectDialog(booking.id)}
-                      sx={{
-                        flex: 1,
-                        borderColor: "#d32f2f",
-                        color: "#d32f2f",
-                        py: 1.3,
-                        borderRadius: 2,
-                        fontWeight: 600,
-                        "&:hover": {
-                          bgcolor: "#fff5f5",
-                          borderColor: "#d32f2f",
-                        },
-                      }}
-                    >
-                      REJECT
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card key={booking.id} className="hover:-translate-y-1 transition-transform">
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-bold mb-3">Request #{booking.id?.slice(-6)}</h3>
+                <div className="space-y-1.5 text-sm text-muted-foreground mb-6">
+                  <p>Resource: <strong className="text-foreground">{resource ? resource.name : booking.resourceId}</strong></p>
+                  <p>Location: <strong className="text-foreground">{resource ? resource.location : "-"}</strong></p>
+                  <p>User ID: <strong className="text-foreground">{booking.userId}</strong></p>
+                  <p>Date: <strong className="text-foreground">{booking.date}</strong></p>
+                  <p>Time: <strong className="text-foreground">{booking.startTime} — {booking.endTime}</strong></p>
+                  <p>Purpose: <strong className="text-foreground">{booking.purpose}</strong></p>
+                  <p>Attendees: <strong className="text-foreground">{booking.attendees}</strong></p>
+                  <p>Status: <strong className="text-foreground">{booking.status}</strong></p>
+                </div>
+                <div className="flex gap-2">
+                  <Button className="flex-1" onClick={() => handleApprove(booking.id)}>APPROVE</Button>
+                  <Button variant="destructive" className="flex-1" onClick={() => openRejectDialog(booking.id)}>REJECT</Button>
+                </div>
+              </CardContent>
+            </Card>
           );
         })}
-      </Grid>
+      </div>
 
-      <Dialog
-        open={rejectDialogOpen}
-        onClose={closeRejectDialog}
-        fullWidth
-        maxWidth="sm"
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
-          },
-        }}
-      >
-        <DialogTitle sx={{ fontWeight: 700, fontSize: "1.35rem" }}>
-          Reject Booking Request
-        </DialogTitle>
-
-        <DialogContent sx={{ mt: 1, pb: 3 }}>
-          <TextField
-            fullWidth
-            label="Rejection Reason"
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            multiline
-            minRows={4}
-            placeholder="Enter reason for rejection..."
-            sx={{ mt: 1 }}
-          />
+      <Dialog open={rejectDialogOpen} onClose={closeRejectDialog}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Reject Booking Request</DialogTitle></DialogHeader>
+          <Textarea placeholder="Enter reason for rejection..." value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} rows={4} className="mt-2" />
+          <DialogFooter>
+            <Button variant="ghost" onClick={closeRejectDialog}>Cancel</Button>
+            <Button variant="destructive" onClick={handleReject} disabled={!rejectReason.trim()}>Confirm Reject</Button>
+          </DialogFooter>
         </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={closeRejectDialog} sx={{ color: "#666666", fontWeight: 500 }}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleReject}
-            disabled={!rejectReason.trim()}
-            sx={{
-              px: 4,
-              bgcolor: "#d32f2f",
-              "&:hover": { bgcolor: "#b71c1c" },
-            }}
-          >
-            Confirm Reject
-          </Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 }

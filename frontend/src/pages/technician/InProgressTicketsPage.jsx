@@ -1,18 +1,15 @@
 import { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Button,
-  Alert,
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  TextField,
-} from "@mui/material";
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
@@ -41,8 +38,8 @@ export default function InProgressTicketsPage() {
       setIssues(filteredIssues);
 
       const map = {};
-      (resourcesRes.data || []).forEach((resource) => {
-        map[resource.id] = resource;
+      (resourcesRes.data || []).forEach((r) => {
+        map[r.id] = r;
       });
       setResourceMap(map);
     } catch (error) {
@@ -51,9 +48,7 @@ export default function InProgressTicketsPage() {
   };
 
   useEffect(() => {
-    if (currentUser) {
-      fetchInProgressIssues();
-    }
+    if (currentUser) fetchInProgressIssues();
   }, [currentUser]);
 
   const openResolveDialog = (issueId) => {
@@ -89,16 +84,11 @@ export default function InProgressTicketsPage() {
     }
   };
 
-  if (loading) {
-    return <Box sx={{ p: 3 }}>Loading...</Box>;
-  }
-
-  if (error) {
-    return <Box sx={{ p: 3 }}>{error}</Box>;
-  }
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (error) return <div className="p-6">{error}</div>;
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="In Progress Tickets"
         subtitle="Manage issues currently being worked on."
@@ -106,76 +96,73 @@ export default function InProgressTicketsPage() {
 
       {message && (
         <Alert
-          severity={message.includes("successfully") ? "success" : "error"}
-          sx={{ mb: 2 }}
+          variant={message.includes("successfully") ? "success" : "destructive"}
+          className="mb-4"
         >
           {message}
         </Alert>
       )}
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {issues.map((issue) => {
           const resource = resourceMap[issue.resourceId];
 
           return (
-            <Grid item xs={12} md={6} lg={4} key={issue.id}>
-              <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" fontWeight="bold">
-                    Issue #{issue.id?.slice(-6)}
-                  </Typography>
+            <Card key={issue.id}>
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-bold">
+                  Issue #{issue.id?.slice(-6)}
+                </h3>
 
-                  <Typography sx={{ mt: 1 }}>
-                    Resource: {resource ? resource.name : issue.resourceId}
-                  </Typography>
-                  <Typography>
-                    Location: {resource ? resource.location : "-"}
-                  </Typography>
-                  <Typography>User ID: {issue.userId}</Typography>
-                  <Typography>Description: {issue.description}</Typography>
-                  <Typography>Priority: {issue.priority}</Typography>
-                  <Typography>Status: {issue.status}</Typography>
+                <div className="mt-2 space-y-1 text-sm">
+                  <p>Resource: {resource ? resource.name : issue.resourceId}</p>
+                  <p>Location: {resource ? resource.location : "-"}</p>
+                  <p>User ID: {issue.userId}</p>
+                  <p>Description: {issue.description}</p>
+                  <p>Priority: {issue.priority}</p>
+                  <p>Status: {issue.status}</p>
+                </div>
 
-                  <Button
-                    variant="contained"
-                    color="success"
-                    sx={{ mt: 2 }}
-                    onClick={() => openResolveDialog(issue.id)}
-                  >
-                    Mark as Fixed
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
+                <Button
+                  variant="success"
+                  className="mt-3"
+                  onClick={() => openResolveDialog(issue.id)}
+                >
+                  Mark as Fixed
+                </Button>
+                <IssueCommentsSection issueId={issue.id} />
+              </CardContent>
+            </Card>
           );
         })}
-      </Grid>
+      </div>
 
-      <Dialog open={dialogOpen} onClose={closeResolveDialog} fullWidth maxWidth="sm">
-        <DialogTitle>Resolve Issue</DialogTitle>
-        <DialogContent sx={{ mt: 1 }}>
-          <TextField
-            fullWidth
-            label="Resolution Note"
+      <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) closeResolveDialog(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resolve Issue</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            placeholder="Resolution note..."
             value={resolutionNote}
             onChange={(e) => setResolutionNote(e.target.value)}
-            multiline
-            minRows={3}
+            rows={3}
+            className="mt-2"
           />
+          <DialogFooter>
+            <Button variant="ghost" onClick={closeResolveDialog}>
+              Cancel
+            </Button>
+            <Button
+              variant="success"
+              onClick={handleResolve}
+              disabled={!resolutionNote.trim()}
+            >
+              Confirm Resolve
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={closeResolveDialog}>Cancel</Button>
-          <Button
-            variant="contained"
-            color="success"
-            onClick={handleResolve}
-            disabled={!resolutionNote.trim()}
-          >
-            Confirm Resolve
-          </Button>
-        </DialogActions>
       </Dialog>
-      
-    </Box>
+    </div>
   );
 }

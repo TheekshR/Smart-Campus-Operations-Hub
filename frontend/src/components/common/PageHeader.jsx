@@ -1,16 +1,10 @@
-import { Box, Typography } from "@mui/material";
-
 export default function PageHeader({ title, subtitle }) {
   return (
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="h4" fontWeight="bold">
-        {title}
-      </Typography>
+    <div className="mb-6">
+      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
       {subtitle && (
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
-          {subtitle}
-        </Typography>
+        <p className="text-muted-foreground mt-1">{subtitle}</p>
       )}
-    </Box>
+    </div>
   );
 }

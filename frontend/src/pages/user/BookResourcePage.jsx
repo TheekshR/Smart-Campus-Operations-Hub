@@ -1,13 +1,10 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  MenuItem,
-  Alert,
-} from "@mui/material";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Alert } from "@/components/ui/alert";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
@@ -98,31 +95,26 @@ export default function BookResourcePage() {
     }
   };
 
-  if (loading) {
-    return <Box sx={{ p: 3 }}>Loading...</Box>;
-  }
-
-  if (error) {
-    return <Box sx={{ p: 3 }}>{error}</Box>;
-  }
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (error) return <div className="p-6">{error}</div>;
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Book Resource"
         subtitle="Submit a booking request for an active campus resource."
       />
 
-      <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-        <CardContent>
+      <Card>
+        <CardContent className="pt-6">
           {message && (
-            <Alert severity={message.includes("successfully") ? "success" : "error"} sx={{ mb: 2 }}>
+            <Alert variant={message.includes("successfully") ? "success" : "destructive"} className="mb-4">
               {message}
             </Alert>
           )}
 
           {suggestion?.message && (
-            <Alert severity="info" sx={{ mb: 2 }}>
+            <Alert variant="info" className="mb-4">
               {suggestion.message}
               {suggestion.suggestedStartTime && suggestion.suggestedEndTime
                 ? ` Suggested: ${suggestion.suggestedStartTime} - ${suggestion.suggestedEndTime}`
@@ -130,79 +122,48 @@ export default function BookResourcePage() {
             </Alert>
           )}
 
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            sx={{ display: "grid", gap: 2 }}
-          >
-            <TextField
-              select
-              label="Resource"
-              name="resourceId"
-              value={formData.resourceId}
-              onChange={handleChange}
-              required
-            >
-              {resources.map((resource) => (
-                <MenuItem key={resource.id} value={resource.id}>
-                  {resource.name} - {resource.location}
-                </MenuItem>
-              ))}
-            </TextField>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Resource</Label>
+              <Select name="resourceId" value={formData.resourceId} onChange={handleChange} required>
+                <option value="">Select resource...</option>
+                {resources.map((resource) => (
+                  <option key={resource.id} value={resource.id}>
+                    {resource.name} - {resource.location}
+                  </option>
+                ))}
+              </Select>
+            </div>
 
-            <TextField
-              label="Date"
-              name="date"
-              type="date"
-              value={formData.date}
-              onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
-              required
-            />
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Input type="date" name="date" value={formData.date} onChange={handleChange} required />
+            </div>
 
-            <TextField
-              label="Start Time"
-              name="startTime"
-              type="time"
-              value={formData.startTime}
-              onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
-              required
-            />
+            <div className="space-y-2">
+              <Label>Start Time</Label>
+              <Input type="time" name="startTime" value={formData.startTime} onChange={handleChange} required />
+            </div>
 
-            <TextField
-              label="End Time"
-              name="endTime"
-              type="time"
-              value={formData.endTime}
-              onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
-              required
-            />
+            <div className="space-y-2">
+              <Label>End Time</Label>
+              <Input type="time" name="endTime" value={formData.endTime} onChange={handleChange} required />
+            </div>
 
-            <TextField
-              label="Purpose"
-              name="purpose"
-              value={formData.purpose}
-              onChange={handleChange}
-              required
-            />
+            <div className="space-y-2">
+              <Label>Purpose</Label>
+              <Input name="purpose" value={formData.purpose} onChange={handleChange} required />
+            </div>
 
-            <TextField
-              label="Attendees"
-              name="attendees"
-              type="number"
-              value={formData.attendees}
-              onChange={handleChange}
-              required
-            />
+            <div className="space-y-2">
+              <Label>Attendees</Label>
+              <Input type="number" name="attendees" value={formData.attendees} onChange={handleChange} required />
+            </div>
 
-            <Button type="submit" variant="contained" sx={{ width: "fit-content" }}>
-              Submit Booking
-            </Button>
-          </Box>
+            <Button type="submit">Submit Booking</Button>
+          </form>
         </CardContent>
       </Card>
-    </Box>
+    </div>
   );
 }
