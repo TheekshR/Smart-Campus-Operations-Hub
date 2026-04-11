@@ -126,7 +126,6 @@ export default function BookResourcePage() {
               {message}
             </Alert>
           )}
-
           {suggestion?.message && (
             <Alert severity="info" sx={{ mb: 2 }}>
               {suggestion.message}
@@ -135,7 +134,8 @@ export default function BookResourcePage() {
                 : ""}
             </Alert>
           )}
-
+          // Booking form with fields for resource selection, date, time,
+          purpose, and attendees
           <Box
             component="form"
             onSubmit={handleSubmit}
