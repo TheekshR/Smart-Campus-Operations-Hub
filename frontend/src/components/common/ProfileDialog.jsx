@@ -10,6 +10,8 @@ import api from "../../api/axios";
 
 export default function ProfileDialog({ open, onClose, user, onProfileUpdated }) {
   const [formData, setFormData] = useState({ phone: "", department: "", bio: "" });
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationPrefs, setNotificationPrefs] = useState({});
   const [message, setMessage] = useState("");
   const [severity, setSeverity] = useState("success");
   const [saving, setSaving] = useState(false);
@@ -17,6 +19,8 @@ export default function ProfileDialog({ open, onClose, user, onProfileUpdated })
   useEffect(() => {
     if (user && open) {
       setFormData({ phone: user.phone || "", department: user.department || "", bio: user.bio || "" });
+      setNotificationsEnabled(user.notificationsEnabled ?? true);
+      setNotificationPrefs(user.notificationPreferences || {});
       setMessage("");
       setSeverity("success");
     }
@@ -33,17 +37,35 @@ export default function ProfileDialog({ open, onClose, user, onProfileUpdated })
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleTogglePref = (key) => {
+    setNotificationPrefs((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setMessage("");
     try {
-      const response = await api.put("/api/users/me", formData);
-      onProfileUpdated(response.data);
-      setMessage("Profile updated successfully.");
+      const profileResponse = await api.put("/api/users/me", formData);
+
+      await api.put("/api/users/me/notification-settings", {
+        notificationsEnabled,
+        notificationPreferences: notificationPrefs,
+      });
+
+      const refreshedUser = await api.get("/api/users/me");
+      onProfileUpdated(refreshedUser.data || profileResponse.data);
+
+      setMessage("Profile and notification settings updated successfully.");
       setSeverity("success");
     } catch (error) {
-      console.error("Failed to update profile:", error);
-      const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to update profile.";
+      console.error("Failed to update profile/settings:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to update profile/settings.";
       setMessage(errorMessage);
       setSeverity("error");
     } finally {
@@ -87,6 +109,37 @@ export default function ProfileDialog({ open, onClose, user, onProfileUpdated })
           <div className="space-y-2">
             <Label htmlFor="bio">Bio</Label>
             <Textarea id="bio" name="bio" value={formData.bio} onChange={handleChange} rows={4} />
+          </div>
+        </div>
+
+        <div className="border-t my-4 pt-4">
+          <h3 className="text-lg font-semibold mb-3">Notification Settings</h3>
+
+          <Button
+            variant={notificationsEnabled ? "default" : "outline"}
+            size="sm"
+            className="mb-3"
+            onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+          >
+            {notificationsEnabled ? "Disable All Notifications" : "Enable Notifications"}
+          </Button>
+
+          <div className="space-y-2">
+            {Object.keys(notificationPrefs).map((key) => (
+              <div
+                key={key}
+                className="flex justify-between items-center p-3 border rounded-lg"
+              >
+                <span className="text-sm">{key}</span>
+                <Button
+                  size="sm"
+                  variant={notificationPrefs[key] ? "default" : "outline"}
+                  onClick={() => handleTogglePref(key)}
+                >
+                  {notificationPrefs[key] ? "ON" : "OFF"}
+                </Button>
+              </div>
+            ))}
           </div>
         </div>
 

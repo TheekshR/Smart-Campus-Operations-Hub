@@ -27,7 +27,9 @@ export default function BookResourcePage() {
     const fetchResources = async () => {
       try {
         const response = await api.get("/api/resources");
-        setResources(response.data.filter((resource) => resource.status === "ACTIVE"));
+        setResources(
+          response.data.filter((resource) => resource.status === "ACTIVE"),
+        );
       } catch (err) {
         console.error("Failed to fetch resources:", err);
       }
@@ -36,6 +38,7 @@ export default function BookResourcePage() {
     fetchResources();
   }, []);
 
+  // Whenever the user changes a relevant field, check for booking suggestions
   const handleChange = async (e) => {
     const { name, value } = e.target;
     const updated = { ...formData, [name]: value };
@@ -63,7 +66,7 @@ export default function BookResourcePage() {
       }
     }
   };
-
+  // Handle form submission to create a new booking
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");

@@ -35,6 +35,21 @@ public class UserController {
         return service.updateMyProfile(email, request);
     }
 
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/me/notification-settings")
+    public User getMyNotificationSettings(@AuthenticationPrincipal OidcUser oidcUser) {
+        String email = oidcUser.getEmail();
+        return service.getCurrentUserByEmail(email);
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/me/notification-settings")
+    public User updateNotificationSettings(@AuthenticationPrincipal OidcUser oidcUser,
+                                           @RequestBody User updatedUser) {
+        String email = oidcUser.getEmail();
+        return service.updateMyNotificationSettings(email, updatedUser);
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public List<User> getAllUsers() {

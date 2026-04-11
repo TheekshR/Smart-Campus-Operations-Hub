@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Smart Campus Operations Hub</title>
+  <!-- <title>Smart Campus Operations Hub</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -33,7 +33,7 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     }
   </style>
-</head>
+</head> -->
 <body>
 
 <h1>Smart Campus Operations Hub</h1>

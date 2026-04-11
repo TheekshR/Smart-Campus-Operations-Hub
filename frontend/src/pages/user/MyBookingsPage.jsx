@@ -1,3 +1,4 @@
+// initiate MyBookingsPage.jsx
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ export default function MyBookingsPage() {
     }
   }, [currentUser]);
 
+  // Handle booking cancellation
   const handleCancel = async (bookingId) => {
     try {
       await api.put(`/api/bookings/${bookingId}/cancel`, null, {
