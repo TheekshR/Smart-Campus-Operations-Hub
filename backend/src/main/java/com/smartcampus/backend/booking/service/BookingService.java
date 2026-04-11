@@ -155,7 +155,7 @@ public class BookingService {
                 .toList();
 
         LocalTime candidateStart = requestedStart;
-
+        // Iterate through existing bookings to find the next available slot
         for (Booking booking : bookings) {
             LocalTime existingStart = LocalTime.parse(booking.getStartTime());
             LocalTime existingEnd = LocalTime.parse(booking.getEndTime());
