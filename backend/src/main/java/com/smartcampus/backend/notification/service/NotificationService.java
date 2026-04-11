@@ -33,6 +33,17 @@ public class NotificationService {
             throw new RuntimeException("Target user not found");
         }
 
+        if (!user.isNotificationsEnabled()) {
+            return null;
+        }
+
+        if (user.getNotificationPreferences() != null) {
+            Boolean enabled = user.getNotificationPreferences().get(type.name());
+            if (enabled != null && !enabled) {
+                return null;
+            }
+        }
+
         Notification notification = new Notification();
         notification.setUserId(userId);
         notification.setType(type);
@@ -49,6 +60,17 @@ public class NotificationService {
         User user = userRepository.findById(notification.getUserId()).orElse(null);
         if (user == null) {
             throw new RuntimeException("Target user not found");
+        }
+
+        if (!user.isNotificationsEnabled()) {
+            return null;
+        }
+
+        if (user.getNotificationPreferences() != null && notification.getType() != null) {
+            Boolean enabled = user.getNotificationPreferences().get(notification.getType().name());
+            if (enabled != null && !enabled) {
+                return null;
+            }
         }
 
         notification.setRead(false);
