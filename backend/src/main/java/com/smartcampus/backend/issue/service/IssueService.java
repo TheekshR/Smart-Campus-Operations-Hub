@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-
+// Contains business logic for managing issues.
 @Service
 public class IssueService {
 
