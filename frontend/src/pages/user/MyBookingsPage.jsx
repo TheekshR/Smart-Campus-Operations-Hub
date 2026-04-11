@@ -1,3 +1,4 @@
+// initiate MyBookingsPage.jsx
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -32,6 +33,7 @@ export default function MyBookingsPage() {
     }
   }, [currentUser]);
 
+  // Handle booking cancellation
   const handleCancel = async (bookingId) => {
     try {
       await api.put(`/api/bookings/${bookingId}/cancel`, null, {
@@ -64,7 +66,10 @@ export default function MyBookingsPage() {
       />
 
       {message && (
-        <Alert severity={message.includes("successfully") ? "success" : "error"} sx={{ mb: 2 }}>
+        <Alert
+          severity={message.includes("successfully") ? "success" : "error"}
+          sx={{ mb: 2 }}
+        >
           {message}
         </Alert>
       )}
@@ -77,7 +82,9 @@ export default function MyBookingsPage() {
                 <Typography variant="h6" fontWeight="bold">
                   Booking #{booking.id?.slice(-6)}
                 </Typography>
-                <Typography sx={{ mt: 1 }}>Resource ID: {booking.resourceId}</Typography>
+                <Typography sx={{ mt: 1 }}>
+                  Resource ID: {booking.resourceId}
+                </Typography>
                 <Typography>Date: {booking.date}</Typography>
                 <Typography>
                   Time: {booking.startTime} - {booking.endTime}
@@ -92,7 +99,8 @@ export default function MyBookingsPage() {
                   Approved By: {booking.approvedBy || "-"}
                 </Typography>
 
-                {(booking.status === "PENDING" || booking.status === "APPROVED") && (
+                {(booking.status === "PENDING" ||
+                  booking.status === "APPROVED") && (
                   <Button
                     variant="outlined"
                     color="error"
