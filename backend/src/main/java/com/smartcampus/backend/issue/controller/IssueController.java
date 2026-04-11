@@ -8,7 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-// Allow requests from React frontend running on port 3000
+// Allow cross-origin requests from the frontend (React app running on localhost:3000)
 @CrossOrigin(origins = "http://localhost:3000")
 
 // Marks this class as a REST controller (handles HTTP requests)
@@ -90,7 +90,7 @@ public class IssueController {
         return service.getIssuesByStatus(status);
     }
 
-    // ================= ASSIGN TECHNICIAN =================
+    // ================= ASSIGNING TECHNICIAN =================
 
     // Only ADMIN can assign a technician to an issue
     @PreAuthorize("hasRole('ADMIN')")
