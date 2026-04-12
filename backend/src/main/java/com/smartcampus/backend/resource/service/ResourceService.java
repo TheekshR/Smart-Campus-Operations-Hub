@@ -1,9 +1,13 @@
 package com.smartcampus.backend.resource.service;
 
+import com.smartcampus.backend.resource.dto.ResourceSummaryDTO;
 import com.smartcampus.backend.resource.enums.ResourceStatus;
 import com.smartcampus.backend.resource.enums.ResourceType;
 import com.smartcampus.backend.resource.model.Resource;
 import com.smartcampus.backend.resource.repository.ResourceRepository;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,9 +20,23 @@ import java.util.stream.Collectors;
 public class ResourceService {
 
     private final ResourceRepository repository;
+    private final MongoTemplate mongoTemplate;
 
-    public ResourceService(ResourceRepository repository) {
+    public ResourceService(ResourceRepository repository, MongoTemplate mongoTemplate) {
         this.repository = repository;
+        this.mongoTemplate = mongoTemplate;
+    }
+
+    public long countResources() {
+        return repository.count();
+    }
+
+    public List<ResourceSummaryDTO> getAllResourceSummaries() {
+        Query query = new Query();
+        query.fields().exclude("imageBase64");
+        return mongoTemplate.find(query, Resource.class).stream()
+                .map(ResourceSummaryDTO::from)
+                .collect(Collectors.toList());
     }
 
     public Resource createResourceWithImage(String name,
@@ -51,43 +69,23 @@ public class ResourceService {
     }
 
     public List<Resource> getFilteredResources(String type, String location, String status, Integer minCapacity) {
-        ResourceType resourceType = (type != null && !type.isBlank())
-                ? ResourceType.valueOf(type.toUpperCase())
-                : null;
+        Query query = new Query();
+        query.fields().exclude("imageBase64");
 
-        ResourceStatus resourceStatus = (status != null && !status.isBlank())
-                ? ResourceStatus.valueOf(status.toUpperCase())
-                : null;
-
-        List<Resource> resources;
-
-        if (resourceType != null && location != null && resourceStatus != null) {
-            resources = repository.findByTypeAndLocationIgnoreCaseAndStatus(resourceType, location, resourceStatus);
-        } else if (resourceType != null && location != null) {
-            resources = repository.findByTypeAndLocationIgnoreCase(resourceType, location);
-        } else if (resourceType != null && resourceStatus != null) {
-            resources = repository.findByTypeAndStatus(resourceType, resourceStatus);
-        } else if (location != null && resourceStatus != null) {
-            resources = repository.findByLocationIgnoreCaseAndStatus(location, resourceStatus);
-        } else if (resourceType != null) {
-            resources = repository.findByType(resourceType);
-        } else if (location != null) {
-            resources = repository.findByLocationIgnoreCase(location);
-        } else if (resourceStatus != null) {
-            resources = repository.findByStatus(resourceStatus);
-        } else if (minCapacity != null) {
-            resources = repository.findByCapacityGreaterThanEqual(minCapacity);
-        } else {
-            resources = repository.findAll();
+        if (type != null && !type.isBlank()) {
+            query.addCriteria(Criteria.where("type").is(ResourceType.valueOf(type.toUpperCase())));
         }
-
+        if (location != null && !location.isBlank()) {
+            query.addCriteria(Criteria.where("location").regex(location, "i"));
+        }
+        if (status != null && !status.isBlank()) {
+            query.addCriteria(Criteria.where("status").is(ResourceStatus.valueOf(status.toUpperCase())));
+        }
         if (minCapacity != null) {
-            resources = resources.stream()
-                    .filter(resource -> resource.getCapacity() >= minCapacity)
-                    .collect(Collectors.toList());
+            query.addCriteria(Criteria.where("capacity").gte(minCapacity));
         }
 
-        return resources;
+        return mongoTemplate.find(query, Resource.class);
     }
 
     public Resource getResourceById(String id) {

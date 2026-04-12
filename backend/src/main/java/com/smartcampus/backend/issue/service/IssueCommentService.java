@@ -10,6 +10,9 @@ import com.smartcampus.backend.notification.model.NotificationType;
 import com.smartcampus.backend.notification.service.NotificationService;
 import com.smartcampus.backend.user.model.User;
 import com.smartcampus.backend.user.repository.UserRepository;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -23,15 +26,18 @@ public class IssueCommentService {
     private final IssueRepository issueRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final MongoTemplate mongoTemplate;
 
     public IssueCommentService(IssueCommentRepository commentRepository,
                                IssueRepository issueRepository,
                                UserRepository userRepository,
-                               NotificationService notificationService) {
+                               NotificationService notificationService,
+                               MongoTemplate mongoTemplate) {
         this.commentRepository = commentRepository;
         this.issueRepository = issueRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.mongoTemplate = mongoTemplate;
     }
 
     public List<IssueComment> getCommentsByIssue(String issueId, String email) {
@@ -134,8 +140,13 @@ public class IssueCommentService {
     }
 
     private Issue getIssue(String issueId) {
-        return issueRepository.findById(issueId)
-                .orElseThrow(() -> new RuntimeException("Issue not found"));
+        Query query = new Query(Criteria.where("id").is(issueId));
+        query.fields().exclude("imageBase64List");
+        Issue issue = mongoTemplate.findOne(query, Issue.class);
+        if (issue == null) {
+            throw new RuntimeException("Issue not found");
+        }
+        return issue;
     }
 
     private boolean canAccessIssueComments(User currentUser, Issue issue) {

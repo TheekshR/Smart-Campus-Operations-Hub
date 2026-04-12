@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Stack,
-  Alert,
-} from "@mui/material";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
@@ -52,50 +46,40 @@ export default function UserNotificationsPage() {
     }
   };
 
-  if (loading) {
-    return <Box sx={{ p: 3 }}>Loading...</Box>;
-  }
-
-  if (error) {
-    return <Box sx={{ p: 3 }}>{error}</Box>;
-  }
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (error) return <div className="p-6">{error}</div>;
 
   return (
-    <Box>
+    <div>
       <PageHeader title="Notifications" subtitle="View booking and ticket updates." />
 
       {message && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert variant="destructive" className="mb-4">
           {message}
         </Alert>
       )}
 
-      <Stack spacing={2}>
-        {notifications.map((notification) => (
-          <Card key={notification.id} sx={{ borderRadius: 3, boxShadow: 2 }}>
-            <CardContent>
-              <Typography variant="h6">{notification.title}</Typography>
-              <Typography color="text.secondary" sx={{ mb: 1 }}>
-                {notification.message}
-              </Typography>
-              <Typography variant="body2" sx={{ mb: 2 }}>
-                Type: {notification.type} | Read: {notification.read ? "Yes" : "No"}
-              </Typography>
-
-              <Stack direction="row" spacing={2}>
-                {!notification.read && (
-                  <Button variant="outlined" onClick={() => handleMarkRead(notification.id)}>
+      <div className="space-y-3">
+        {notifications.map((n) => (
+          <Card key={n.id}>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-semibold">{n.title}</h3>
+              <p className="text-muted-foreground mb-2">{n.message}</p>
+              <p className="text-sm mb-3">Type: {n.type} | Read: {n.read ? "Yes" : "No"}</p>
+              <div className="flex gap-2">
+                {!n.read && (
+                  <Button variant="outline" size="sm" onClick={() => handleMarkRead(n.id)}>
                     Mark as Read
                   </Button>
                 )}
-                <Button color="error" variant="outlined" onClick={() => handleDelete(notification.id)}>
+                <Button variant="destructive" size="sm" onClick={() => handleDelete(n.id)}>
                   Delete
                 </Button>
-              </Stack>
+              </div>
             </CardContent>
           </Card>
         ))}
-      </Stack>
-    </Box>
+      </div>
+    </div>
   );
 }

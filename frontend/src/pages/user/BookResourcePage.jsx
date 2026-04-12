@@ -1,13 +1,10 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  MenuItem,
-  Alert,
-} from "@mui/material";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Alert } from "@/components/ui/alert";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../api/axios";
 import useCurrentUser from "../../hooks/useCurrentUser";
@@ -29,10 +26,10 @@ export default function BookResourcePage() {
   useEffect(() => {
     const fetchResources = async () => {
       try {
-        const response = await api.get("/api/resources");
-        setResources(
-          response.data.filter((resource) => resource.status === "ACTIVE"),
-        );
+        const response = await api.get("/api/resources", {
+          params: { status: "ACTIVE" },
+        });
+        setResources(response.data);
       } catch (err) {
         console.error("Failed to fetch resources:", err);
       }
@@ -110,24 +107,21 @@ export default function BookResourcePage() {
   }
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Book Resource"
         subtitle="Submit a booking request for an active campus resource."
       />
 
-      <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-        <CardContent>
+      <Card>
+        <CardContent className="pt-6">
           {message && (
-            <Alert
-              severity={message.includes("successfully") ? "success" : "error"}
-              sx={{ mb: 2 }}
-            >
+            <Alert variant={message.includes("successfully") ? "success" : "destructive"} className="mb-4">
               {message}
             </Alert>
           )}
           {suggestion?.message && (
-            <Alert severity="info" sx={{ mb: 2 }}>
+            <Alert variant="info" className="mb-4">
               {suggestion.message}
               {suggestion.suggestedStartTime && suggestion.suggestedEndTime
                 ? ` Suggested: ${suggestion.suggestedStartTime} - ${suggestion.suggestedEndTime}`
@@ -208,6 +202,6 @@ export default function BookResourcePage() {
           </Box>
         </CardContent>
       </Card>
-    </Box>
+    </div>
   );
 }

@@ -1,14 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
-import {
   PieChart,
   Pie,
   Cell,
@@ -21,11 +12,19 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
+import { Card, CardContent } from "@/components/ui/card";
 import PageHeader from "../../components/common/PageHeader";
 import StatCard from "../../components/common/StatCard";
 import api from "../../api/axios";
 
-const COLORS = ["#1976d2", "#2e7d32", "#ed6c02", "#d32f2f", "#6a1b9a", "#00838f"];
+const COLORS = [
+  "hsl(221, 83%, 53%)",
+  "hsl(142, 71%, 45%)",
+  "hsl(38, 92%, 50%)",
+  "hsl(0, 72%, 51%)",
+  "hsl(271, 76%, 53%)",
+  "hsl(187, 100%, 42%)",
+];
 
 export default function AdminDashboard() {
   const [resources, setResources] = useState([]);
@@ -192,256 +191,261 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <Box sx={{ p: 3, display: "flex", alignItems: "center", gap: 2 }}>
-        <CircularProgress size={24} />
-        <Typography>Loading admin dashboard...</Typography>
-      </Box>
+      <div className="p-6 flex items-center gap-3">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <p className="text-muted-foreground">Loading admin dashboard...</p>
+      </div>
     );
   }
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Admin Dashboard"
         subtitle="Monitor resources, users, bookings, and issues across the campus system."
       />
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
-        </Alert>
+        </div>
       )}
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard title="Total Resources" value={resources.length} />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard title="Total Users" value={users.length} />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard title="Pending Bookings" value={pendingBookings} />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard title="Out Of Service" value={outOfServiceCount} />
-        </Grid>
-      </Grid>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard title="Total Resources" value={resources.length} />
+        <StatCard title="Total Users" value={users.length} />
+        <StatCard title="Pending Bookings" value={pendingBookings} />
+        <StatCard title="Out Of Service" value={outOfServiceCount} />
+      </div>
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12}>
-          <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-            <CardContent>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                System Insights
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={3}>
-                  <Typography>
-                    Most booked resource: <strong>{insights.mostBookedResource}</strong>
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <Typography>
-                    Peak booking hour: <strong>{insights.peakBookingHour}</strong>
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <Typography>
-                    Most problematic resource: <strong>{insights.mostProblematicResource}</strong>
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <Typography>
-                    Total open issues: <strong>{insights.totalOpenIssues}</strong>
-                  </Typography>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      {/* System Insights */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <h3 className="text-lg font-semibold mb-4">System Insights</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Most booked resource</p>
+              <p className="font-semibold">{insights.mostBookedResource}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Peak booking hour</p>
+              <p className="font-semibold">{insights.peakBookingHour}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Most problematic resource</p>
+              <p className="font-semibold">{insights.mostProblematicResource}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total open issues</p>
+              <p className="font-semibold">{insights.totalOpenIssues}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} lg={6}>
-          <Card sx={{ borderRadius: 3, boxShadow: 2, height: 360 }}>
-            <CardContent>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                Resource Types
-              </Typography>
-              <ResponsiveContainer width="100%" height={260}>
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        {/* Bar Chart - Resource Types */}
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="text-lg font-semibold mb-4">Resource Types</h3>
+            <div className="h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={resourceTypeData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "8px",
+                      border: "1px solid hsl(var(--border))",
+                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                    }}
+                  />
                   <Legend />
-                  <Bar dataKey="value" name="Resources">
+                  <Bar dataKey="value" name="Resources" radius={[4, 4, 0, 0]}>
                     {resourceTypeData.map((entry, index) => (
                       <Cell key={`cell-resource-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
+            </div>
+          </CardContent>
+        </Card>
 
-        <Grid item xs={12} md={6} lg={3}>
-          <Card sx={{ borderRadius: 3, boxShadow: 2, height: 360 }}>
-            <CardContent>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                Booking Status
-              </Typography>
-              <ResponsiveContainer width="100%" height={260}>
-                <PieChart>
-                  <Pie
-                    data={bookingStatusData}
-                    dataKey="value"
-                    nameKey="name"
-                    outerRadius={90}
-                    label
-                  >
-                    {bookingStatusData.map((entry, index) => (
-                      <Cell key={`cell-booking-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={6} lg={3}>
-          <Card sx={{ borderRadius: 3, boxShadow: 2, height: 360 }}>
-            <CardContent>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                Issue Status
-              </Typography>
-              <ResponsiveContainer width="100%" height={260}>
-                <PieChart>
-                  <Pie
-                    data={issueStatusData}
-                    dataKey="value"
-                    nameKey="name"
-                    outerRadius={90}
-                    label
-                  >
-                    {issueStatusData.map((entry, index) => (
-                      <Cell key={`cell-issue-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} lg={4}>
-          <Card sx={{ borderRadius: 3, boxShadow: 2, height: 360 }}>
-            <CardContent>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                User Roles
-              </Typography>
-              <ResponsiveContainer width="100%" height={260}>
+        {/* Pie Chart - User Roles */}
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="text-lg font-semibold mb-4">User Roles</h3>
+            <div className="h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={userRoleData}
                     dataKey="value"
                     nameKey="name"
-                    outerRadius={90}
-                    label
+                    cx="50%"
+                    cy="50%"
+                    outerRadius="80%"
+                    innerRadius="45%"
+                    paddingAngle={3}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
                     {userRoleData.map((entry, index) => (
                       <Cell key={`cell-user-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "8px",
+                      border: "1px solid hsl(var(--border))",
+                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        <Grid item xs={12} md={6} lg={4}>
-          <Card sx={{ borderRadius: 3, boxShadow: 2, height: 360 }}>
-            <CardContent>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                Recent Pending Bookings
-              </Typography>
+      {/* Pie Charts Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Pie Chart - Booking Status */}
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="text-lg font-semibold mb-4">Booking Status</h3>
+            <div className="h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={bookingStatusData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius="80%"
+                    innerRadius="45%"
+                    paddingAngle={3}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {bookingStatusData.map((entry, index) => (
+                      <Cell key={`cell-booking-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "8px",
+                      border: "1px solid hsl(var(--border))",
+                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                    }}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
 
-              {recentPendingBookings.length === 0 ? (
-                <Typography color="text.secondary">No pending bookings.</Typography>
-              ) : (
-                recentPendingBookings.map((booking) => (
-                  <Box
+        {/* Pie Chart - Issue Status */}
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="text-lg font-semibold mb-4">Issue Status</h3>
+            <div className="h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={issueStatusData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius="80%"
+                    innerRadius="45%"
+                    paddingAngle={3}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {issueStatusData.map((entry, index) => (
+                      <Cell key={`cell-issue-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "8px",
+                      border: "1px solid hsl(var(--border))",
+                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                    }}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Activity Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Recent Pending Bookings */}
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="text-lg font-semibold mb-4">Recent Pending Bookings</h3>
+            {recentPendingBookings.length === 0 ? (
+              <p className="text-muted-foreground text-sm">No pending bookings.</p>
+            ) : (
+              <div className="space-y-3">
+                {recentPendingBookings.map((booking) => (
+                  <div
                     key={booking.id}
-                    sx={{
-                      mb: 2,
-                      pb: 1.5,
-                      borderBottom: "1px solid #f0f0f0",
-                    }}
+                    className="pb-3 border-b border-border last:border-0 last:pb-0"
                   >
-                    <Typography fontWeight="600">
-                      {booking.purpose}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      User: {booking.userId}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <p className="font-medium">{booking.purpose}</p>
+                    <p className="text-sm text-muted-foreground">User: {booking.userId}</p>
+                    <p className="text-sm text-muted-foreground">
                       Date: {booking.date} | {booking.startTime} - {booking.endTime}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Status: {booking.status}
-                    </Typography>
-                  </Box>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+                    </p>
+                    <span className="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800">
+                      {booking.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-        <Grid item xs={12} md={6} lg={4}>
-          <Card sx={{ borderRadius: 3, boxShadow: 2, height: 360 }}>
-            <CardContent>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                Recent Reported Issues
-              </Typography>
-
-              {recentReportedIssues.length === 0 ? (
-                <Typography color="text.secondary">No reported issues.</Typography>
-              ) : (
-                recentReportedIssues.map((issue) => (
-                  <Box
+        {/* Recent Reported Issues */}
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="text-lg font-semibold mb-4">Recent Reported Issues</h3>
+            {recentReportedIssues.length === 0 ? (
+              <p className="text-muted-foreground text-sm">No reported issues.</p>
+            ) : (
+              <div className="space-y-3">
+                {recentReportedIssues.map((issue) => (
+                  <div
                     key={issue.id}
-                    sx={{
-                      mb: 2,
-                      pb: 1.5,
-                      borderBottom: "1px solid #f0f0f0",
-                    }}
+                    className="pb-3 border-b border-border last:border-0 last:pb-0"
                   >
-                    <Typography fontWeight="600">
-                      {issue.description}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      User: {issue.userId}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Priority: {issue.priority}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Status: {issue.status}
-                    </Typography>
-                  </Box>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+                    <p className="font-medium">{issue.description}</p>
+                    <p className="text-sm text-muted-foreground">User: {issue.userId}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-800">
+                        {issue.priority}
+                      </span>
+                      <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-800">
+                        {issue.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

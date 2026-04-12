@@ -1,15 +1,8 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  Typography,
-  TextField,
-  MenuItem,
-} from "@mui/material";
-import api from "../../api/axios";
+import { Card, CardContent } from "@/components/ui/card";
+import { Select } from "@/components/ui/select";
 import PageHeader from "../../components/common/PageHeader";
+import api from "../../api/axios";
 
 export default function ResourceListPage() {
   const [resources, setResources] = useState([]);
@@ -35,61 +28,55 @@ export default function ResourceListPage() {
   }, [type, status]);
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Resources"
         subtitle="Browse and filter campus resources."
       />
 
-      <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-        <TextField
-          select
-          label="Type"
+      <div className="flex gap-3 mb-6">
+        <Select
           value={type}
           onChange={(e) => setType(e.target.value)}
-          sx={{ minWidth: 220 }}
+          className="min-w-[220px]"
         >
-          <MenuItem value="">All</MenuItem>
-          <MenuItem value="LAB">LAB</MenuItem>
-          <MenuItem value="LECTURE_HALL">LECTURE_HALL</MenuItem>
-          <MenuItem value="MEETING_ROOM">MEETING_ROOM</MenuItem>
-          <MenuItem value="EQUIPMENT">EQUIPMENT</MenuItem>
-        </TextField>
+          <option value="">All Types</option>
+          <option value="LAB">LAB</option>
+          <option value="LECTURE_HALL">LECTURE_HALL</option>
+          <option value="MEETING_ROOM">MEETING_ROOM</option>
+          <option value="EQUIPMENT">EQUIPMENT</option>
+        </Select>
 
-        <TextField
-          select
-          label="Status"
+        <Select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          sx={{ minWidth: 220 }}
+          className="min-w-[220px]"
         >
-          <MenuItem value="">All</MenuItem>
-          <MenuItem value="ACTIVE">ACTIVE</MenuItem>
-          <MenuItem value="OUT_OF_SERVICE">OUT_OF_SERVICE</MenuItem>
-        </TextField>
-      </Box>
+          <option value="">All Status</option>
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="OUT_OF_SERVICE">OUT_OF_SERVICE</option>
+        </Select>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {resources.map((resource) => (
-          <Grid item xs={12} md={6} lg={4} key={resource.id}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-              <CardContent>
-                <Typography variant="h6" fontWeight="bold">
-                  {resource.name}
-                </Typography>
-                <Typography sx={{ mt: 1 }}>Type: {resource.type}</Typography>
-                <Typography>Capacity: {resource.capacity}</Typography>
-                <Typography>Location: {resource.location}</Typography>
-                <Typography>Status: {resource.status}</Typography>
-                <Typography>
+          <Card key={resource.id}>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-bold">{resource.name}</h3>
+              <div className="mt-2 space-y-1 text-sm">
+                <p>Type: {resource.type}</p>
+                <p>Capacity: {resource.capacity}</p>
+                <p>Location: {resource.location}</p>
+                <p>Status: {resource.status}</p>
+                <p>
                   Available: {resource.availabilityStart || "-"} to{" "}
                   {resource.availabilityEnd || "-"}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         ))}
-      </Grid>
-    </Box>
+      </div>
+    </div>
   );
 }

@@ -1,5 +1,44 @@
-import { Box, List, ListItemButton, ListItemText, Toolbar, Typography } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  LayoutDashboard,
+  Eye,
+  CalendarPlus,
+  CalendarCheck,
+  AlertTriangle,
+  Ticket,
+  Bell,
+  Settings,
+  Users,
+  ClipboardList,
+  CalendarRange,
+  ListChecks,
+  UserCog,
+  PlayCircle,
+  CheckCircle2,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
+
+const iconMap = {
+  Dashboard: LayoutDashboard,
+  "View Resources": Eye,
+  "Book Resource": CalendarPlus,
+  "My Bookings": CalendarCheck,
+  "Report Incident": AlertTriangle,
+  "My Tickets": Ticket,
+  Notifications: Bell,
+  "Manage Resources": Settings,
+  "Manage Users": Users,
+  "Booking Requests": ClipboardList,
+  "All Bookings": CalendarRange,
+  "All Issues": ListChecks,
+  "Assign Technician": UserCog,
+  "Assigned Tickets": Ticket,
+  "In Progress Tickets": PlayCircle,
+  "Resolved Tickets": CheckCircle2,
+};
 
 const menuByRole = {
   user: [
@@ -30,135 +69,72 @@ const menuByRole = {
   ],
 };
 
-export default function Sidebar({ role = "user" }) {
+export default function Sidebar({ role = "user", collapsed = false, onToggle }) {
   const location = useLocation();
   const links = menuByRole[role] || [];
 
   return (
-    <Box
-      sx={{
-        width: 270,
-        bgcolor: "#0a0a0a",
-        color: "#ffffff",
-        minHeight: "100vh",
-        borderRight: "1px solid #1f1f1f",
-        boxShadow: "4px 0 20px rgba(0, 0, 0, 0.6)",
-        position: "relative",
-        overflow: "hidden",
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: "1px",
-          background: "linear-gradient(90deg, transparent, #ffffff, transparent)",
-          opacity: 0.15,
-        },
-      }}
+    <aside
+      className={cn(
+        "min-h-screen flex flex-col border-r bg-card transition-all duration-300 relative",
+        collapsed ? "w-[68px]" : "w-[260px]"
+      )}
     >
-      <Toolbar
-        sx={{
-          borderBottom: "1px solid #1f1f1f",
-          px: 3,
-          py: 3.5,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 1.5,
-        }}
-      >
-        {/* Campus Logo - Bigger and Above the Text */}
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: "8px",
-            overflow: "hidden",
-            flexShrink: 0,
-            boxShadow: "0 0 20px rgba(255,255,255,0.25)",
-            mb: 1,
-          }}
+      {/* Brand */}
+      <div className={cn("px-4 py-5 flex items-center border-b gap-3", collapsed ? "justify-center" : "")}>
+        <div className="w-9 h-9 rounded-lg overflow-hidden shadow-md shrink-0">
+          <img src="/logo.png" alt="Campus Logo" className="w-full h-full object-contain" />
+        </div>
+        {!collapsed && (
+          <div className="min-w-0">
+            <h1 className="text-sm font-bold tracking-widest text-foreground leading-tight">CAMPUS SYNC</h1>
+            <span className="text-[11px] text-muted-foreground capitalize">{role} portal</span>
+          </div>
+        )}
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
+        {links.map((link) => {
+          const isActive = location.pathname === link.path;
+          const Icon = iconMap[link.label] || LayoutDashboard;
+
+          return (
+            <Link
+              key={link.path}
+              to={link.path}
+              title={collapsed ? link.label : undefined}
+              className={cn(
+                "flex items-center gap-3 rounded-md text-sm font-medium transition-colors h-10",
+                collapsed ? "justify-center px-2" : "px-3",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+              )}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              {!collapsed && <span className="truncate">{link.label}</span>}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Toggle Button */}
+      <div className="px-2 py-3 border-t">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onToggle}
+          className={cn("w-full", collapsed ? "justify-center" : "justify-start gap-2")}
         >
-          <img
-            src="/logo.png"        // Change if your logo filename is different
-            alt="Campus Logo"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-            }}
-          />
-        </Box>
-
-        {/* Title */}
-        <Typography
-          variant="h5"
-          fontWeight="800"
-          letterSpacing="0.6px"
-          sx={{
-            background: "linear-gradient(90deg, #ffffff, #cccccc)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            textAlign: "center",
-          }}
-        >
-          CAMPUS SYNC
-        </Typography>
-      </Toolbar>
-
-      <List sx={{ px: 2, py: 2 }}>
-        {links.map((link) => (
-          <ListItemButton
-            key={link.path}
-            component={Link}
-            to={link.path}
-            selected={location.pathname === link.path}
-            sx={{
-              color: "#e0e0e0",
-              borderRadius: "12px",
-              marginBottom: "6px",
-              padding: "14px 20px",
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              position: "relative",
-              overflow: "hidden",
-
-              "&:hover": {
-                bgcolor: "#1a1a1a",
-                transform: "translateX(8px)",
-                boxShadow: "0 4px 15px rgba(255,255,255,0.08)",
-              },
-
-              "&.Mui-selected": {
-                bgcolor: "#ffffff",
-                color: "#000000",
-                fontWeight: "600",
-                boxShadow: "0 4px 20px rgba(255,255,255,0.15)",
-                "&::after": {
-                  content: '""',
-                  position: "absolute",
-                  left: 0,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: "4px",
-                  height: "60%",
-                  bgcolor: "#000000",
-                  borderRadius: "0 4px 4px 0",
-                },
-              },
-            }}
-          >
-            <ListItemText 
-              primary={link.label} 
-              primaryTypographyProps={{
-                fontSize: "15px",
-                fontWeight: location.pathname === link.path ? 600 : 500,
-                letterSpacing: "0.3px",
-              }}
-            />
-          </ListItemButton>
-        ))}
-      </List>
-    </Box>
+          {collapsed ? <ChevronsRight className="h-4 w-4" /> : (
+            <>
+              <ChevronsLeft className="h-4 w-4" />
+              <span>Collapse</span>
+            </>
+          )}
+        </Button>
+      </div>
+    </aside>
   );
 }

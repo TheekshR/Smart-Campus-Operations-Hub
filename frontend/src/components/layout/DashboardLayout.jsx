@@ -1,20 +1,22 @@
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { Box } from "@mui/material";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import ChatWidget from "../common/ChatWidget";
 
 export default function DashboardLayout({ role }) {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f5f7fb" }}>
-      <Sidebar role={role} />
-      <Box sx={{ flexGrow: 1 }}>
-        <Topbar role={role} />
-        <Box sx={{ p: 3 }}>
+    <div className="flex min-h-screen bg-muted/40">
+      <Sidebar role={role} collapsed={!sidebarOpen} onToggle={() => setSidebarOpen((prev) => !prev)} />
+      <div className="flex-1 min-w-0">
+        <Topbar role={role} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} sidebarOpen={sidebarOpen} />
+        <main className="p-6">
           <Outlet />
-        </Box>
-      </Box>
+        </main>
+      </div>
       {role === "user" && <ChatWidget />}
-    </Box>
+    </div>
   );
 }
