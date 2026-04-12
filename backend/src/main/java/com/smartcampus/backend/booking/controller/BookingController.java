@@ -6,7 +6,7 @@ import com.smartcampus.backend.booking.service.BookingService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
+// REST controller for handling booking-related HTTP requests
 import java.util.List;
 
 // Allow requests from React frontend (running on port 3000)

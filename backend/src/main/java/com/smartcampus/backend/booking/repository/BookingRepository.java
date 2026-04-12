@@ -5,10 +5,11 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
 
+// Repository interface for managing Booking entities in MongoDB
 public interface BookingRepository extends MongoRepository<Booking, String> {
     List<Booking> findByUserId(String userId);
     List<Booking> findByResourceIdAndDate(String resourceId, String date);
-
+    // Additional query methods for filtering bookings by status, resource, or date
     List<Booking> findByStatus(String status);
     List<Booking> findByResourceId(String resourceId);
     List<Booking> findByDate(String date);

@@ -97,9 +97,14 @@ export default function BookResourcePage() {
       setMessage(errorMessage);
     }
   };
-
-  if (loading) return <div className="p-6">Loading...</div>;
-  if (error) return <div className="p-6">{error}</div>;
+  // Display loading or error states if user data is still being fetched
+  if (loading) {
+    return <Box sx={{ p: 3 }}>Loading...</Box>;
+  }
+  // Display error message if there was an issue fetching user data
+  if (error) {
+    return <Box sx={{ p: 3 }}>{error}</Box>;
+  }
 
   return (
     <div>
@@ -115,7 +120,6 @@ export default function BookResourcePage() {
               {message}
             </Alert>
           )}
-
           {suggestion?.message && (
             <Alert variant="info" className="mb-4">
               {suggestion.message}
@@ -124,47 +128,78 @@ export default function BookResourcePage() {
                 : ""}
             </Alert>
           )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Resource</Label>
-              <Select name="resourceId" value={formData.resourceId} onChange={handleChange} required>
-                <option value="">Select resource...</option>
-                {resources.map((resource) => (
-                  <option key={resource.id} value={resource.id}>
-                    {resource.name} - {resource.location}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Date</Label>
-              <Input type="date" name="date" value={formData.date} onChange={handleChange} required />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Start Time</Label>
-              <Input type="time" name="startTime" value={formData.startTime} onChange={handleChange} required />
-            </div>
-
-            <div className="space-y-2">
-              <Label>End Time</Label>
-              <Input type="time" name="endTime" value={formData.endTime} onChange={handleChange} required />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Purpose</Label>
-              <Input name="purpose" value={formData.purpose} onChange={handleChange} required />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Attendees</Label>
-              <Input type="number" name="attendees" value={formData.attendees} onChange={handleChange} required />
-            </div>
-
-            <Button type="submit">Submit Booking</Button>
-          </form>
+          // Booking form with fields for resource selection, date, time,
+          purpose, and attendees
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            sx={{ display: "grid", gap: 2 }}
+          >
+            <TextField
+              select
+              label="Resource"
+              name="resourceId"
+              value={formData.resourceId}
+              onChange={handleChange}
+              required
+            >
+              {resources.map((resource) => (
+                <MenuItem key={resource.id} value={resource.id}>
+                  {resource.name} - {resource.location}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              label="Date"
+              name="date"
+              type="date"
+              value={formData.date}
+              onChange={handleChange}
+              InputLabelProps={{ shrink: true }}
+              required
+            />
+            //
+            <TextField
+              label="Start Time"
+              name="startTime"
+              type="time"
+              value={formData.startTime}
+              onChange={handleChange}
+              InputLabelProps={{ shrink: true }}
+              required
+            />
+            <TextField
+              label="End Time"
+              name="endTime"
+              type="time"
+              value={formData.endTime}
+              onChange={handleChange}
+              InputLabelProps={{ shrink: true }}
+              required
+            />
+            <TextField
+              label="Purpose"
+              name="purpose"
+              value={formData.purpose}
+              onChange={handleChange}
+              required
+            />
+            <TextField
+              label="Attendees"
+              name="attendees"
+              type="number"
+              value={formData.attendees}
+              onChange={handleChange}
+              required
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{ width: "fit-content" }}
+            >
+              Submit Booking
+            </Button>
+          </Box>
         </CardContent>
       </Card>
     </div>

@@ -35,7 +35,7 @@ public class BookingService {
         query.fields().exclude("imageBase64").exclude("imageType");
         return mongoTemplate.findOne(query, Resource.class);
     }
-
+    // ================= CREATE BOOKING =================
     public Booking createBooking(Booking booking) {
 
         Resource resource = findResourceWithoutImages(booking.getResourceId());
@@ -68,7 +68,7 @@ public class BookingService {
             LocalTime existingEnd = LocalTime.parse(existingBooking.getEndTime());
 
             boolean overlaps = newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart);
-
+            // If there is an overlap, we can either reject the booking or suggest the next available slot.
             if (overlaps) {
                 throw new RuntimeException("Booking conflict: resource is already booked for the selected time");
             }
@@ -105,6 +105,7 @@ public class BookingService {
         return repository.findByDate(date);
     }
 
+    // ================= UPDATE BOOKING STATUS =================
     public Booking updateBookingStatus(String id, String status, String reason, String admin) {
         Booking existingBooking = repository.findById(id).orElse(null);
 
@@ -127,7 +128,7 @@ public class BookingService {
                     savedBooking.getId()
             );
         }
-
+        // Notify user if booking is rejected with reason
         if ("REJECTED".equals(status)) {
             notificationService.createNotificationForUser(
                     savedBooking.getUserId(),
@@ -163,7 +164,7 @@ public class BookingService {
                 .toList();
 
         LocalTime candidateStart = requestedStart;
-
+        // Iterate through existing bookings to find the next available slot
         for (Booking booking : bookings) {
             LocalTime existingStart = LocalTime.parse(booking.getStartTime());
             LocalTime existingEnd = LocalTime.parse(booking.getEndTime());
